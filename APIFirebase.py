@@ -39,22 +39,18 @@ orders = pd.read_csv("Simulated Data/order_data_1576.csv")
 phleb = pd.read_csv("Simulated Data/phleb_data_1576.csv")
 catchment = pd.read_csv("Simulated Data/catchment_data_1576.csv")
 
-orders_json = orders.to_dict()
-phleb_json = phleb.to_dict()
-catchment_json = catchment.to_dict()
+def upload_phleb(df):
+    for index in range(len(df)):
+        phleb_id = df['phleb_id'].iloc[index]
+        json = df.iloc[index].to_dict()
+        db.child('phlebotomists').child(phleb_id).set(json)
 
-for index in range(len(orders)):
-    order_id = orders['order_id'].iloc[index]
-    json = orders.iloc[index].to_dict()
-    db.child('orders').child(order_id).set(json)
+def upload_catchment(df):
+    catchment_counter = 0
+    for index in range(len(df)):
+        json = df.iloc[index].to_dict()
+        db.child('catchment').child(catchment_counter).set(json)
+        catchment_counter += 1
 
-for index in range(len(phleb)):
-    phleb_id = phleb['phleb_id'].iloc[index]
-    json = phleb.iloc[index].to_dict()
-    db.child('phlebotomists').child(phleb_id).set(json)
-
-catchment_counter = 0
-for index in range(len(catchment)):
-    json = catchment.iloc[index].to_dict()
-    db.child('catchment').child(catchment_counter).set(json)
-    catchment_counter += 1
+upload_phleb(phleb)
+upload_catchment(catchment)
