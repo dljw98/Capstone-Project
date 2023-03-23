@@ -145,6 +145,9 @@ def get_orderRevenues_list(orders_df, catchments_df, phlebs_df):
     return revenues
 
 def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
+    orders_df_copy = orders_df.copy()
+    phlebs_df_copy = phlebs_df.copy()
+
     def find_applicable_exp(row):
         args = np.empty(0)
         for val in row:
@@ -153,7 +156,7 @@ def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
         service_needs = service_cols[idx[0]]
 
         expertiseName = "expertise_{}".format(service_needs[0].split("_")[1])
-        temp = phlebs_df.loc[(phlebs_df[expertiseName] == 1)]
+        temp = phlebs_df_copy.loc[(phlebs_df_copy[expertiseName] == 1)]
 
         if len(service_needs) > 1:
             for service in service_needs[1:]:
@@ -161,13 +164,13 @@ def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
                 temp = temp.loc[(temp[expertiseName] == 1)]  
         return temp.index.to_list()
     
-    numPhleb = phlebs_df.shape[0]
-    all_columns = orders_df.columns
+    numPhleb = phlebs_df_copy.shape[0]
+    all_columns = orders_df_copy.columns
     service_cols = all_columns[all_columns.str.contains('service')]
-    orders_df['Acceptable Phleb Indices'] = orders_df[service_cols].apply(find_applicable_exp, axis=1)
+    orders_df_copy['Acceptable Phleb Indices'] = orders_df_copy[service_cols].apply(find_applicable_exp, axis=1)
     expertises = [1] #ending depot
     expertises.extend([1 for _ in range(numPhleb)])
-    expertises.extend(orders_df['Acceptable Phleb Indices'])
+    expertises.extend(orders_df_copy['Acceptable Phleb Indices'])
     return expertises
 
 def get_metadata(orders_df, catchments_df, phlebs_df):

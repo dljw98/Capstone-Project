@@ -4,7 +4,7 @@ import FeatureEngineering as FE
 import numpy as np
 import json
 
-def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, inverse_ratings, expertiseConstraints, metadata):
+def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints,  inverse_ratings, metadata):
     """
     Purpose of this function is to store the data for the problem.
 
@@ -36,7 +36,7 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
 
     data['metadata'] = metadata
 
-    data['inverse_ratings'] = inverse_ratings
+    data['inverse_ratings'] = [int(inverse * np.sum(time_matrix[1])) for inverse in inverse_ratings]
 
     #Important! To ensure Revenue Lost is larger than overall transit time in order to ensure the "penalty" is effective during optimization routing
     data['revenue_potential'] = [int(revenue * np.sum(time_matrix[1])) for revenue in revenues] 
@@ -299,6 +299,13 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     numCatchments = catchments_df.shape[0]
     numPhleb = phlebs_df.shape[0]
 
+    order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
+    revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
+    servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
+    expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
+    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
+    metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
+
     if (numCatchments > 1) & (isMultiEnds == False):
         isMultiEnds = True
         print("Multi-Ending Catchments is detected in the input file, algorithm has switched to Multi-ends version accordingly!")
@@ -319,13 +326,6 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         orders_time_matrix = np.vstack((row_zeros, orders_time_matrix))
     else:
         time_matrix = FE.create_time_matrix(coordinates_list, api_key) #normal time_matrix with index 0 being the single ending catchment
-
-    order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
-    revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
-    servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
-    expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
-    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
-    metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
     
     if isMultiEnds:
         data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
