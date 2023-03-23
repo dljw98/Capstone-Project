@@ -463,10 +463,10 @@ def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_
 
         for idx in range(len(phleb_route['Locations Sequence']) - 1):
 
-            slack_time = phleb_route['Slack Times Sequence'][idx][1]
+            max_slack_time = phleb_route['Slack Times Sequence'][idx][1]
 
-            if (slack_time == 0) | (required_servicing_time >= slack_time) : 
-                #Max Slack Time is 0, or required servicing time is more than Slack Time, nothing to do
+            if (max_slack_time == 0) | (required_servicing_time >= max_slack_time) : 
+                #Max Slack Time is 0, or required servicing time is more than or equal to Slack Time, nothing to do
                 continue
 
             location_cur = phleb_route['Locations Sequence'][idx]
@@ -477,10 +477,10 @@ def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_
             coord_cur = metadata['Locations'][location_cur]['Coordinate']
             coord_next = metadata['Locations'][location_next]['Coordinate']
 
-            response = FE.send_request([coord_cur], [order_coord], api_key)
-            transit_time_first_part = FE.build_time_matrix(response)[0][0]
-            response = FE.send_request([order_coord], [coord_next], api_key)
-            transit_time_second_part = FE.build_time_matrix(response)[0][0]
+            response_cur = FE.send_request([coord_cur], [order_coord], api_key)
+            transit_time_first_part = FE.build_time_matrix(response_cur)[0][0]
+            response_next = FE.send_request([order_coord], [coord_next], api_key)
+            transit_time_second_part = FE.build_time_matrix(response_next)[0][0]
 
             total_transit_time = transit_time_first_part + transit_time_second_part
 
@@ -490,18 +490,20 @@ def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_
                 temp.append(total_transit_time) #Total Travel Time for sorting later
                 temp.append((min_endTime_cur + total_transit_time) // 60 ) #Proposed Time Window Start
                 temp.append((min_endTime_cur + total_transit_time) // 60 + 1) #Proposed Time Window End
+                temp.append(location_cur)
+                temp.append(location_next)
                 temp.append(coord_cur)
                 temp.append(coord_next)
 
                 output.append(temp)
         
-        vacant = pd.DataFrame(columns=['PhlebotomistIndex', 'TotalTravelTime', 'TimeWindowStart', 'TimeWindowEnd',
-                                                'LastLocBeforeFree', 'FirstLocAfterFree'],
-                            data=output)
+    vacant = pd.DataFrame(columns=['PhlebotomistIndex', 'TotalTravelTime', 'TimeWindowStart', 'TimeWindowEnd',
+                                            'FromLocIdx', 'ToLocIdx', 'FromLocCoordinates', 'ToLocCoordinates'],
+                        data=output)
 
-        vacant = vacant.sort_values(by=['TotalTravelTime'])   
+    vacant = vacant.sort_values(by=['TotalTravelTime'])   
 
-        return vacant.to_json(orient="columns")
+    return vacant.to_json(orient="columns")
 
 
 
