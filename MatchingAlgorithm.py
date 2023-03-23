@@ -3,6 +3,7 @@ from ortools.constraint_solver import pywrapcp
 import FeatureEngineering as FE
 import numpy as np
 import json
+import pandas as pd
 
 def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints,  inverse_ratings, metadata):
     """
