@@ -299,13 +299,6 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     numCatchments = catchments_df.shape[0]
     numPhleb = phlebs_df.shape[0]
 
-    order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
-    revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
-    servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
-    expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
-    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
-    metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
-
     if (numCatchments > 1) & (isMultiEnds == False):
         isMultiEnds = True
         print("Multi-Ending Catchments is detected in the input file, algorithm has switched to Multi-ends version accordingly!")
@@ -327,6 +320,13 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     else:
         time_matrix = FE.create_time_matrix(coordinates_list, api_key) #normal time_matrix with index 0 being the single ending catchment
     
+    order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
+    revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
+    servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
+    expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
+    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
+    metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
+    
     if isMultiEnds:
         data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
     else:
@@ -341,6 +341,10 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
 
     # Create Routing Model.
     routing = pywrapcp.RoutingModel(manager)
+
+    #Add preference to phlebotomists with better service quality
+    for vehicle_id in range(data["num_vehicles"]):
+        routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
 
     # Create and register a transit callback.
     def time_callback(from_index, to_index):
@@ -386,7 +390,7 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         if location_idx == 0:
             continue
         index = manager.NodeToIndex(location_idx)
-        time_dimension.CumulVar(index).SetRange(time_window[0] + data['servicing_times'][index], time_window[1] + data['servicing_times'][index])
+        time_dimension.CumulVar(index).SetRange(time_window[0] + data['servicing_times'][location_idx], time_window[1] + data['servicing_times'][location_idx])
         routing.AddToAssignment(time_dimension.SlackVar(index))
 
     # Add time window constraints for each vehicle start node.
@@ -419,9 +423,6 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         vehicles.extend(expConstraints)
         routing.VehicleVar(index).SetValues(vehicles)
     
-    #Add preference to phlebotomists with better service quality
-    for vehicle_id in range(data["num_vehicles"]):
-        routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
 
     # Setting first solution heuristic.
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
@@ -442,6 +443,7 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
             return output_jsonify(data, manager, routing, solution)
     else:
          return 'Routing Status: ' + routing.status
+    
 
 def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_expertise_list, algo_routes_json, api_key):
     json_object = json.loads(algo_routes_json)
