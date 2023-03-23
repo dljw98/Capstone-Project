@@ -174,6 +174,11 @@ def get_metadata(orders_df, catchments_df, phlebs_df):
     numPhleb = phlebs_df.shape[0]
     numCatchment = catchments_df.shape[0]
 
+    all_columns = phlebs_df.columns
+    expertise_cols = all_columns[all_columns.str.contains('expertise')]
+    phlebs_df['Expertises Unpivoted'] = phlebs_df[expertise_cols].values.tolist()
+    phlebs_df['Expertises Unpivoted'] = phlebs_df['Expertises Unpivoted'].apply(lambda x: np.array(expertise_cols)[np.where(np.array(x) == 1)])
+
     #If there is only 1 catchment area, we will put it in the Front
     if catchments_df.shape[0] == 1:
         order_ids = ["Ending Location"] #ending catchment
@@ -181,8 +186,10 @@ def get_metadata(orders_df, catchments_df, phlebs_df):
         order_ids.extend(orders_df['order_id'])
         addresses_list = get_coordinates_list(orders_df, catchments_df, phlebs_df)
         locations_metadata = zip(addresses_list, order_ids)
+
+        phlebs_metadata = zip(phlebs_df['phleb_id'], phlebs_df['Expertises Unpivoted'])
         metadata = {'Locations': [{"Location Index": idx, "Coordinate": metadata[0], "Order Id": str(metadata[1])}for idx, metadata in enumerate(locations_metadata)]}
-        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": id}for idx, id in enumerate(phlebs_df['phleb_id'])]
+        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": fields[0], "Expertise": fields[1].tolist()}for idx, fields in enumerate(phlebs_metadata)]
     else:
     #If there more than 1 catchment area, index 0 will just be a trivial placeholder, so not to disrupt other inputs' format, 
     # and we will add ending catchments to the End instead
@@ -193,7 +200,9 @@ def get_metadata(orders_df, catchments_df, phlebs_df):
         addresses_list = ["Placeholder"]
         addresses_list.extend(get_coordinates_list(orders_df, catchments_df, phlebs_df))
         locations_metadata = zip(addresses_list, order_ids)
+
+        phlebs_metadata = zip(phlebs_df['phleb_id'], phlebs_df['Expertises Unpivoted'])
         metadata = {'Locations': [{"Location Index": idx, "Coordinate": metadata[0], "Order Id": str(metadata[1])}for idx, metadata in enumerate(locations_metadata)]}
-        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": id}for idx, id in enumerate(phlebs_df['phleb_id'])]
+        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": fields[0], "Expertise": fields[1].tolist()}for idx, fields in enumerate(phlebs_metadata)]
     
     return metadata
