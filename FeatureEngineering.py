@@ -134,7 +134,7 @@ def get_servicingTimes_list(orders_df, catchments_df, phlebs_df):
     return servicing_times
 
 def get_inverseRatings_list(orders_df, catchments_df, phlebs_df):
-    inverse_ratings = 5 - phlebs_df['service_rating']
+    inverse_ratings = 6 - phlebs_df['service_rating']
     return inverse_ratings
 
 def get_orderRevenues_list(orders_df, catchments_df, phlebs_df):

@@ -36,7 +36,7 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
 
     data['metadata'] = metadata
 
-    data['inverse_ratings'] = [int(inverse * np.sum(time_matrix[1])) for inverse in inverse_ratings]
+    data['inverse_ratings'] = [int(inv * 1) for inv in inverse_ratings]  
 
     #Important! To ensure Revenue Lost is larger than overall transit time in order to ensure the "penalty" is effective during optimization routing
     data['revenue_potential'] = [int(revenue * np.sum(time_matrix[1])) for revenue in revenues] 
@@ -342,10 +342,6 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     # Create Routing Model.
     routing = pywrapcp.RoutingModel(manager)
 
-    #Add preference to phlebotomists with better service quality
-    for vehicle_id in range(data["num_vehicles"]):
-        routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
-
     # Create and register a transit callback.
     def time_callback(from_index, to_index):
         """Returns the travel time between the two nodes."""
@@ -384,6 +380,12 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         False,  # Don't force start cumul to zero.
         time)
     time_dimension = routing.GetDimensionOrDie(time)
+
+    #Add preference to phlebotomists with better service quality
+    for vehicle_id in range(data["num_vehicles"]):
+        time_dimension.SetSpanCostCoefficientForVehicle(data['inverse_ratings'][vehicle_id], int(vehicle_id))
+        #routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
+        #print(routing.GetFixedCostOfVehicle(vehicle_id))
 
     # Add time window constraints for each location except depot
     for location_idx, time_window in enumerate(data['time_windows']):
