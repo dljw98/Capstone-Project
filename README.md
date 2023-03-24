@@ -4,14 +4,14 @@
 - Introduction to Project
 - Purpose
 
-# Requirements:
-- Functional
-- Non-functional
-
 # Set Up:
 - Dependencies
 - How to configure the project (external APIs)
 
-# Matching Algorithm
+# Requirements:
+- Functional
+- Non-functional
+
+# Matching Algorithm:
 - Overview (how it works)
 - Features
