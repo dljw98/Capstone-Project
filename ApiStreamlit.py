@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import io
 import streamlit as st
 from FeatureEngineering import create_time_matrix
-from MatchingAlgorithm import run_algorithm
+from MatchingAlgorithm import run_algorithm, reverse_getVacancy_algorithm
 from ApiFirebase import upload_phleb
 import copy
 import firebase_admin
@@ -102,7 +102,8 @@ st.title('TATA 1mg Matching Algorithm API')
 st.text("")
 st.text("")
 
-tab1, tab2, tab3, tab4 = st.tabs(['Amend Data with CSV', 'Amend Data Manually', 'Delete Data', 'Get Data'])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(['Amend Data with CSV', 'Amend Data Manually', 'Delete Data', 
+                                        'Get Available Timeslots', 'Get Output'])
 
 st.text("")
 st.text("")
@@ -182,6 +183,20 @@ with tab3:
         db.child('phlebotomists').child(phleb_id).remove()
 
 with tab4:
+    col1, col2 = st.columns([1,1])
+    lat = col1.text_input("Please input your latitude information", "")
+    long = col2.text_input("Please input your longitude information", "")
+    if (len(lat) != 0) and (len(long) != 0):
+        col1_, col2_, col3_ = st.columns([1,1,1])
+        vaccination = col1_.button('Vaccination', use_container_width=True)
+        art = col2_.button('ART Test', use_container_width=True)
+        pathology = col3_.button('Pathology', use_container_width=True)
+    if (len(lat) != 0) and (len(long) != 0) and ((vaccination) or (pathology) or (art)):
+        st.write('success')
+        #result = reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_expertise_list, algo_routes_json, api_key)
+        #st.write(result)
+        
+with tab5:
     orders = st.file_uploader('Please upload order data', type='csv', accept_multiple_files=False, key='upload_orders')
     API_key = st.text_input("Please enter your API Key", "")
 
