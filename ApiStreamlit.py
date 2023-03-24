@@ -92,10 +92,6 @@ def convert_to_df(csv):
 
 def get_routes_api(orders, catchment, phleb, API_key):
     result = run_algorithm(orders, catchment, phleb, API_key)
-    #json_object = json.loads(result)
-    #routes = json_object['Routes']
-    #routes = pd.json_normalize(routes)
-    #return convert_to_csv(routes)
     return result
 
 st.title('TATA 1mg Matching Algorithm API')
@@ -191,14 +187,32 @@ with tab4:
         vaccination = col1_.button('Vaccination', use_container_width=True)
         art = col2_.button('ART Test', use_container_width=True)
         pathology = col3_.button('Pathology', use_container_width=True)
+        #API_key = st.text_input("Please enter your API Key", "", key='api_key_timewindow')
     if (len(lat) != 0) and (len(long) != 0) and ((vaccination) or (pathology) or (art)):
         st.write('success')
-        #result = reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_expertise_list, algo_routes_json, api_key)
-        #st.write(result)
+        order_coord = lat + ',' + long
+        service_time = None
+        required_expertise = []
+        if vaccination:
+            service_time = 12
+            required_expertise.append('expertise_vaccination')
+        elif pathology:
+            service_time = 15
+            required_expertise.append('expertise_pathology')
+        else:
+            service_time = 20
+            required_expertise.append('expertise_artTest')
+        routes = db.child('routes_placeholder').get().val()
+        string_result = reverse_getVacancy_algorithm(order_coord, service_time, required_expertise, routes,
+                                                    '')
+        json_result = json.loads(string_result)
+        df_result = pd.DataFrame.from_dict(json_result)
+        st.write(service_time)
+        st.write(df_result)
         
 with tab5:
     orders = st.file_uploader('Please upload order data', type='csv', accept_multiple_files=False, key='upload_orders')
-    API_key = st.text_input("Please enter your API Key", "")
+    API_key = st.text_input("Please enter your API Key", "", key='api_key_getoutput')
 
     st.text("")
     st.text("")
