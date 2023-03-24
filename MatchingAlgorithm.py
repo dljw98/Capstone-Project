@@ -5,7 +5,7 @@ import numpy as np
 import json
 import pandas as pd
 
-def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints,  inverse_ratings, metadata):
+def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  inverse_ratings, metadata):
     """
     Purpose of this function is to store the data for the problem.
 
@@ -55,8 +55,8 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
     data['starts'] = [i for i in range(1, num_vehicles+1)] #start locations
     data['ends'] = [0 for _ in range(num_vehicles)] #end location
     
-    data['demands'] = [1 if _ > num_vehicles else 0 for _ in range(1, len(time_matrix) + 1)] 
-    data['vehicle_capacities'] = [20 for _ in range(num_vehicles)]
+    data['demands'] = orders_capacities
+    data['vehicle_capacities'] = phlebs_capacities
     data['servicing_times'] = servicing_times
 
     data['expertises'] = expertiseConstraints
@@ -321,6 +321,8 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     else:
         time_matrix = FE.create_time_matrix(coordinates_list, api_key) #normal time_matrix with index 0 being the single ending catchment
     
+    orders_capacities = FE.get_orderCapacities_list(orders_df, catchments_df, phlebs_df)
+    phlebs_capacities = FE.get_phlebCapacities_list(orders_df, catchments_df, phlebs_df)
     order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
     revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
     servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
@@ -329,9 +331,9 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
     
     if isMultiEnds:
-        data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
+        data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
     else:
-        data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
+        data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
@@ -454,6 +456,8 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
 
     time_matrix = time_matrix
     
+    orders_capacities = FE.get_orderCapacities_list(orders_df, catchments_df, phlebs_df)
+    phlebs_capacities = FE.get_phlebCapacities_list(orders_df, catchments_df, phlebs_df)
     order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
     revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
     servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
@@ -461,7 +465,7 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
     inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
     metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
     
-    data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
+    data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
@@ -515,8 +519,6 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
     #Add preference to phlebotomists with better service quality
     for vehicle_id in range(data["num_vehicles"]):
         time_dimension.SetSpanCostCoefficientForVehicle(data['inverse_ratings'][vehicle_id], int(vehicle_id))
-        #routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
-        #print(routing.GetFixedCostOfVehicle(vehicle_id))
 
     # Add time window constraints for each location except depot
     for location_idx, time_window in enumerate(data['time_windows']):

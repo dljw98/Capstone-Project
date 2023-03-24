@@ -48,8 +48,11 @@ def create_time_matrix(address_list, api):
         
         dest_addresses_r = addresses[(q * max_rows): (q * max_rows) + r]
         response = send_request(origin_addresses, dest_addresses_r, API_key)
-        for numRow  in range(len(row_time_matrix)):
-            row_time_matrix[numRow] += build_time_matrix(response)[numRow]
+        if len(row_time_matrix) == 0:
+                row_time_matrix += build_time_matrix(response)
+        else:
+            for numRow in range(len(row_time_matrix)):
+                row_time_matrix[numRow] += build_time_matrix(response)[numRow]
 
         time_matrix += row_time_matrix
         
@@ -143,6 +146,16 @@ def get_orderRevenues_list(orders_df, catchments_df, phlebs_df):
     revenues.extend([1 for _ in range(numPhleb)])
     revenues.extend(orders_df['price'])
     return revenues
+
+def get_orderCapacities_list(orders_df, catchments_df, phlebs_df):
+    numPhleb = phlebs_df.shape[0]
+    capacities = [0] #ending depot
+    capacities.extend([0 for _ in range(numPhleb)])
+    capacities.extend(orders_df['capacity_needed'])
+    return capacities 
+
+def get_phlebCapacities_list(orders_df, catchments_df, phlebs_df):
+    return phlebs_df['capacity'] 
 
 def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
     orders_df_copy = orders_df.copy()
