@@ -3,8 +3,9 @@ from ortools.constraint_solver import pywrapcp
 import FeatureEngineering as FE
 import numpy as np
 import json
+import pandas as pd
 
-def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, inverse_ratings, expertiseConstraints, metadata):
+def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  inverse_ratings, metadata):
     """
     Purpose of this function is to store the data for the problem.
 
@@ -36,7 +37,7 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
 
     data['metadata'] = metadata
 
-    data['inverse_ratings'] = inverse_ratings
+    data['inverse_ratings'] = [int(inv * 1) for inv in inverse_ratings]  
 
     #Important! To ensure Revenue Lost is larger than overall transit time in order to ensure the "penalty" is effective during optimization routing
     data['revenue_potential'] = [int(revenue * np.sum(time_matrix[1])) for revenue in revenues] 
@@ -54,8 +55,8 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
     data['starts'] = [i for i in range(1, num_vehicles+1)] #start locations
     data['ends'] = [0 for _ in range(num_vehicles)] #end location
     
-    data['demands'] = [1 if _ > num_vehicles else 0 for _ in range(1, len(time_matrix) + 1)] 
-    data['vehicle_capacities'] = [20 for _ in range(num_vehicles)]
+    data['demands'] = orders_capacities
+    data['vehicle_capacities'] = phlebs_capacities
     data['servicing_times'] = servicing_times
 
     data['expertises'] = expertiseConstraints
@@ -319,7 +320,9 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         orders_time_matrix = np.vstack((row_zeros, orders_time_matrix))
     else:
         time_matrix = FE.create_time_matrix(coordinates_list, api_key) #normal time_matrix with index 0 being the single ending catchment
-
+    
+    orders_capacities = FE.get_orderCapacities_list(orders_df, catchments_df, phlebs_df)
+    phlebs_capacities = FE.get_phlebCapacities_list(orders_df, catchments_df, phlebs_df)
     order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
     revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
     servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
@@ -328,9 +331,9 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
     
     if isMultiEnds:
-        data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
+        data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
     else:
-        data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
+        data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
@@ -381,12 +384,18 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         time)
     time_dimension = routing.GetDimensionOrDie(time)
 
+    #Add preference to phlebotomists with better service quality
+    for vehicle_id in range(data["num_vehicles"]):
+        time_dimension.SetSpanCostCoefficientForVehicle(data['inverse_ratings'][vehicle_id], int(vehicle_id))
+        #routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
+        #print(routing.GetFixedCostOfVehicle(vehicle_id))
+
     # Add time window constraints for each location except depot
     for location_idx, time_window in enumerate(data['time_windows']):
         if location_idx == 0:
             continue
         index = manager.NodeToIndex(location_idx)
-        time_dimension.CumulVar(index).SetRange(time_window[0] + data['servicing_times'][index], time_window[1] + data['servicing_times'][index])
+        time_dimension.CumulVar(index).SetRange(time_window[0] + data['servicing_times'][location_idx], time_window[1] + data['servicing_times'][location_idx])
         routing.AddToAssignment(time_dimension.SlackVar(index))
 
     # Add time window constraints for each vehicle start node.
@@ -419,9 +428,6 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         vehicles.extend(expConstraints)
         routing.VehicleVar(index).SetValues(vehicles)
     
-    #Add preference to phlebotomists with better service quality
-    for vehicle_id in range(data["num_vehicles"]):
-        routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
 
     # Setting first solution heuristic.
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
@@ -442,7 +448,199 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
             return output_jsonify(data, manager, routing, solution)
     else:
          return 'Routing Status: ' + routing.status
+
+
+def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix):
+    
+    numPhleb = phlebs_df.shape[0]
+
+    time_matrix = time_matrix
+    
+    orders_capacities = FE.get_orderCapacities_list(orders_df, catchments_df, phlebs_df)
+    phlebs_capacities = FE.get_phlebCapacities_list(orders_df, catchments_df, phlebs_df)
+    order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
+    revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
+    servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
+    expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
+    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
+    metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
+    
+    data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
+
+    # Create the routing index manager.
+    manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
+                                           data['num_vehicles'],
+                                           data['starts'],
+                                           data['ends']
+                                           )
+
+    # Create Routing Model.
+    routing = pywrapcp.RoutingModel(manager)
+
+    # Create and register a transit callback.
+    def time_callback(from_index, to_index):
+        """Returns the travel time between the two nodes."""
+        # Convert from routing variable Index to time matrix NodeIndex.
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        return data['time_matrix'][from_node][to_node]
+
+    transit_callback_index = routing.RegisterTransitCallback(time_callback)
+
+    # Define cost of each arc.
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+
+    '''Add demand_callback '''
+    def demand_callback(from_index):
+        """Returns the demand of the node."""
+        # Convert from routing variable Index to demands NodeIndex.
+        from_node = manager.IndexToNode(from_index)
+        return data['demands'][from_node]
+
+    demand_callback_index = routing.RegisterUnaryTransitCallback(
+        demand_callback)
+    routing.AddDimensionWithVehicleCapacity(
+        demand_callback_index,
+        0,  # null capacity slack
+        data['vehicle_capacities'],  # vehicle maximum capacities
+        True,  # start cumul to zero
+        'Capacity')
+
+    # Add Time Windows constraint.
+    time = 'Time'
+    routing.AddDimension(
+        transit_callback_index,
+        10000,  # arbitratrily large maximum Slack time 
+        10000,  # arbitratrily large maximum time per vehicle 
+        False,  # Don't force start cumul to zero.
+        time)
+    time_dimension = routing.GetDimensionOrDie(time)
+
+    #Add preference to phlebotomists with better service quality
+    for vehicle_id in range(data["num_vehicles"]):
+        time_dimension.SetSpanCostCoefficientForVehicle(data['inverse_ratings'][vehicle_id], int(vehicle_id))
+
+    # Add time window constraints for each location except depot
+    for location_idx, time_window in enumerate(data['time_windows']):
+        if location_idx == 0:
+            continue
+        index = manager.NodeToIndex(location_idx)
+        time_dimension.CumulVar(index).SetRange(time_window[0] + data['servicing_times'][location_idx], time_window[1] + data['servicing_times'][location_idx])
+        routing.AddToAssignment(time_dimension.SlackVar(index))
+
+    # Add time window constraints for each vehicle start node.
+    for vehicle_id in range(data["num_vehicles"]):
+        index = routing.Start(vehicle_id)
+        time_dimension.CumulVar(index).SetRange(
+            int(data["time_windows"][0][0]), int(data["time_windows"][0][1]))
+        routing.AddToAssignment(time_dimension.SlackVar(index))
+    
+    # Allow to drop nodes.
+    for node in range(numPhleb + 1, len(data['time_matrix'])): #Starting Location should be omitted
+        penalty = data['revenue_potential'][node]
+        routing.AddDisjunction([manager.NodeToIndex(node)], penalty)
+
+    for i in range(data["num_vehicles"]):
+        routing.AddVariableMinimizedByFinalizer(
+            time_dimension.CumulVar(routing.Start(i))
+        )
+        routing.AddVariableMinimizedByFinalizer(
+            time_dimension.CumulVar(routing.End(i))
+        )
+
+    #Add Service-Expertise Constraints
+    for location_idx, expConstraints in enumerate(data['expertises']):
+        if location_idx < numPhleb + 1:
+            continue
+
+        index = manager.NodeToIndex(location_idx)
+        vehicles = [-1]
+        vehicles.extend(expConstraints)
+        routing.VehicleVar(index).SetValues(vehicles)
+    
+
+    # Setting first solution heuristic.
+    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+    search_parameters.local_search_metaheuristic = (
+        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
+    search_parameters.time_limit.seconds = 30
+    search_parameters.log_search = True
+
+    # Solve the problem.
+    solution = routing.SolveWithParameters(search_parameters)
+
+    if solution:
+        return output_jsonify(data, manager, routing, solution)
+    else:
+         return 'Routing Status: ' + routing.status
+    
+
+def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_expertise_list, algo_routes_json, api_key):
+    json_object = json.loads(algo_routes_json)
+    metadata = json_object['Metadata']
+    routes = json_object['Routes']
+
+    output = []
+    
+    for phleb_idx in range(len(routes)):
+        phleb_route = routes[phleb_idx]
+
+        if set(required_expertise_list).issubset(set(metadata['Phlebotomists'][phleb_idx]['Expertise'])) == False:
+            continue
+
+        for idx in range(len(phleb_route['Locations Sequence']) - 1):
+
+            max_slack_time = phleb_route['Slack Times Sequence'][idx][1]
+
+            if (max_slack_time == 0) | (required_servicing_time >= max_slack_time) : 
+                #Max Slack Time is 0, or required servicing time is more than or equal to Slack Time, nothing to do
+                continue
+
+            location_cur = phleb_route['Locations Sequence'][idx]
+            location_next = phleb_route['Locations Sequence'][idx + 1]
+            min_endTime_cur = phleb_route['End Times Sequence'][idx][0]
+            max_startTime_next = phleb_route['Start Times Sequence'][idx+1][1]
+
+            coord_cur = metadata['Locations'][location_cur]['Coordinate']
+            coord_next = metadata['Locations'][location_next]['Coordinate']
+
+            response_cur = FE.send_request([coord_cur], [order_coord], api_key)
+            transit_time_first_part = FE.build_time_matrix(response_cur)[0][0]
+            response_next = FE.send_request([order_coord], [coord_next], api_key)
+            transit_time_second_part = FE.build_time_matrix(response_next)[0][0]
+
+            total_transit_time = transit_time_first_part + transit_time_second_part
+
+            if (min_endTime_cur + total_transit_time + required_servicing_time <= max_startTime_next):
+                temp = []
+                temp.append(phleb_idx) #Available Phlebotomist Index
+                temp.append(total_transit_time) #Total Travel Time for sorting later
+                temp.append((min_endTime_cur + total_transit_time) // 60 ) #Proposed Time Window Start
+                temp.append((min_endTime_cur + total_transit_time) // 60 + 1) #Proposed Time Window End
+                temp.append(location_cur)
+                temp.append(location_next)
+                temp.append(coord_cur)
+                temp.append(coord_next)
+
+                output.append(temp)
         
+    vacant = pd.DataFrame(columns=['PhlebotomistIndex', 'TotalTravelTime', 'TimeWindowStart', 'TimeWindowEnd',
+                                            'FromLocIdx', 'ToLocIdx', 'FromLocCoordinates', 'ToLocCoordinates'],
+                        data=output)
+
+    vacant = vacant.sort_values(by=['TotalTravelTime'])   
+
+    return vacant.to_json(orient="columns")
+
+
+
+        
+
+    
+    
+
 
     
     

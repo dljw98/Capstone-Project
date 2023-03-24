@@ -48,8 +48,11 @@ def create_time_matrix(address_list, api):
         
         dest_addresses_r = addresses[(q * max_rows): (q * max_rows) + r]
         response = send_request(origin_addresses, dest_addresses_r, API_key)
-        for numRow  in range(len(row_time_matrix)):
-            row_time_matrix[numRow] += build_time_matrix(response)[numRow]
+        if len(row_time_matrix) == 0:
+                row_time_matrix += build_time_matrix(response)
+        else:
+            for numRow in range(len(row_time_matrix)):
+                row_time_matrix[numRow] += build_time_matrix(response)[numRow]
 
         time_matrix += row_time_matrix
         
@@ -134,7 +137,7 @@ def get_servicingTimes_list(orders_df, catchments_df, phlebs_df):
     return servicing_times
 
 def get_inverseRatings_list(orders_df, catchments_df, phlebs_df):
-    inverse_ratings = 5 - phlebs_df['service_rating']
+    inverse_ratings = 6 - phlebs_df['service_rating']
     return inverse_ratings
 
 def get_orderRevenues_list(orders_df, catchments_df, phlebs_df):
@@ -144,7 +147,20 @@ def get_orderRevenues_list(orders_df, catchments_df, phlebs_df):
     revenues.extend(orders_df['price'])
     return revenues
 
+def get_orderCapacities_list(orders_df, catchments_df, phlebs_df):
+    numPhleb = phlebs_df.shape[0]
+    capacities = [0] #ending depot
+    capacities.extend([0 for _ in range(numPhleb)])
+    capacities.extend(orders_df['capacity_needed'])
+    return capacities 
+
+def get_phlebCapacities_list(orders_df, catchments_df, phlebs_df):
+    return phlebs_df['capacity'] 
+
 def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
+    orders_df_copy = orders_df.copy()
+    phlebs_df_copy = phlebs_df.copy()
+
     def find_applicable_exp(row):
         args = np.empty(0)
         for val in row:
@@ -153,7 +169,7 @@ def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
         service_needs = service_cols[idx[0]]
 
         expertiseName = "expertise_{}".format(service_needs[0].split("_")[1])
-        temp = phlebs_df.loc[(phlebs_df[expertiseName] == 1)]
+        temp = phlebs_df_copy.loc[(phlebs_df_copy[expertiseName] == 1)]
 
         if len(service_needs) > 1:
             for service in service_needs[1:]:
@@ -161,18 +177,23 @@ def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
                 temp = temp.loc[(temp[expertiseName] == 1)]  
         return temp.index.to_list()
     
-    numPhleb = phlebs_df.shape[0]
-    all_columns = orders_df.columns
+    numPhleb = phlebs_df_copy.shape[0]
+    all_columns = orders_df_copy.columns
     service_cols = all_columns[all_columns.str.contains('service')]
-    orders_df['Acceptable Phleb Indices'] = orders_df[service_cols].apply(find_applicable_exp, axis=1)
+    orders_df_copy['Acceptable Phleb Indices'] = orders_df_copy[service_cols].apply(find_applicable_exp, axis=1)
     expertises = [1] #ending depot
     expertises.extend([1 for _ in range(numPhleb)])
-    expertises.extend(orders_df['Acceptable Phleb Indices'])
+    expertises.extend(orders_df_copy['Acceptable Phleb Indices'])
     return expertises
 
 def get_metadata(orders_df, catchments_df, phlebs_df):
     numPhleb = phlebs_df.shape[0]
     numCatchment = catchments_df.shape[0]
+
+    all_columns = phlebs_df.columns
+    expertise_cols = all_columns[all_columns.str.contains('expertise')]
+    phlebs_df['Expertises Unpivoted'] = phlebs_df[expertise_cols].values.tolist()
+    phlebs_df['Expertises Unpivoted'] = phlebs_df['Expertises Unpivoted'].apply(lambda x: np.array(expertise_cols)[np.where(np.array(x) == 1)])
 
     #If there is only 1 catchment area, we will put it in the Front
     if catchments_df.shape[0] == 1:
@@ -181,8 +202,10 @@ def get_metadata(orders_df, catchments_df, phlebs_df):
         order_ids.extend(orders_df['order_id'])
         addresses_list = get_coordinates_list(orders_df, catchments_df, phlebs_df)
         locations_metadata = zip(addresses_list, order_ids)
+
+        phlebs_metadata = zip(phlebs_df['phleb_id'], phlebs_df['Expertises Unpivoted'])
         metadata = {'Locations': [{"Location Index": idx, "Coordinate": metadata[0], "Order Id": str(metadata[1])}for idx, metadata in enumerate(locations_metadata)]}
-        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": id}for idx, id in enumerate(phlebs_df['phleb_id'])]
+        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": fields[0], "Expertise": fields[1].tolist()}for idx, fields in enumerate(phlebs_metadata)]
     else:
     #If there more than 1 catchment area, index 0 will just be a trivial placeholder, so not to disrupt other inputs' format, 
     # and we will add ending catchments to the End instead
@@ -193,7 +216,9 @@ def get_metadata(orders_df, catchments_df, phlebs_df):
         addresses_list = ["Placeholder"]
         addresses_list.extend(get_coordinates_list(orders_df, catchments_df, phlebs_df))
         locations_metadata = zip(addresses_list, order_ids)
+
+        phlebs_metadata = zip(phlebs_df['phleb_id'], phlebs_df['Expertises Unpivoted'])
         metadata = {'Locations': [{"Location Index": idx, "Coordinate": metadata[0], "Order Id": str(metadata[1])}for idx, metadata in enumerate(locations_metadata)]}
-        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": id}for idx, id in enumerate(phlebs_df['phleb_id'])]
+        metadata['Phlebotomists'] = [{"Phlebotomist Index": idx, "Id": fields[0], "Expertise": fields[1].tolist()}for idx, fields in enumerate(phlebs_metadata)]
     
     return metadata
