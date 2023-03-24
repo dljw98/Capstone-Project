@@ -446,6 +446,133 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
             return output_jsonify(data, manager, routing, solution)
     else:
          return 'Routing Status: ' + routing.status
+
+
+def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix):
+    
+    numPhleb = phlebs_df.shape[0]
+
+    time_matrix = time_matrix
+    
+    order_window = FE.get_timeWindows_list(orders_df, catchments_df, phlebs_df)
+    revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
+    servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
+    expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
+    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
+    metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
+    
+    data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, inverse_ratings, metadata)
+
+    # Create the routing index manager.
+    manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
+                                           data['num_vehicles'],
+                                           data['starts'],
+                                           data['ends']
+                                           )
+
+    # Create Routing Model.
+    routing = pywrapcp.RoutingModel(manager)
+
+    # Create and register a transit callback.
+    def time_callback(from_index, to_index):
+        """Returns the travel time between the two nodes."""
+        # Convert from routing variable Index to time matrix NodeIndex.
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        return data['time_matrix'][from_node][to_node]
+
+    transit_callback_index = routing.RegisterTransitCallback(time_callback)
+
+    # Define cost of each arc.
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+
+    '''Add demand_callback '''
+    def demand_callback(from_index):
+        """Returns the demand of the node."""
+        # Convert from routing variable Index to demands NodeIndex.
+        from_node = manager.IndexToNode(from_index)
+        return data['demands'][from_node]
+
+    demand_callback_index = routing.RegisterUnaryTransitCallback(
+        demand_callback)
+    routing.AddDimensionWithVehicleCapacity(
+        demand_callback_index,
+        0,  # null capacity slack
+        data['vehicle_capacities'],  # vehicle maximum capacities
+        True,  # start cumul to zero
+        'Capacity')
+
+    # Add Time Windows constraint.
+    time = 'Time'
+    routing.AddDimension(
+        transit_callback_index,
+        10000,  # arbitratrily large maximum Slack time 
+        10000,  # arbitratrily large maximum time per vehicle 
+        False,  # Don't force start cumul to zero.
+        time)
+    time_dimension = routing.GetDimensionOrDie(time)
+
+    #Add preference to phlebotomists with better service quality
+    for vehicle_id in range(data["num_vehicles"]):
+        time_dimension.SetSpanCostCoefficientForVehicle(data['inverse_ratings'][vehicle_id], int(vehicle_id))
+        #routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
+        #print(routing.GetFixedCostOfVehicle(vehicle_id))
+
+    # Add time window constraints for each location except depot
+    for location_idx, time_window in enumerate(data['time_windows']):
+        if location_idx == 0:
+            continue
+        index = manager.NodeToIndex(location_idx)
+        time_dimension.CumulVar(index).SetRange(time_window[0] + data['servicing_times'][location_idx], time_window[1] + data['servicing_times'][location_idx])
+        routing.AddToAssignment(time_dimension.SlackVar(index))
+
+    # Add time window constraints for each vehicle start node.
+    for vehicle_id in range(data["num_vehicles"]):
+        index = routing.Start(vehicle_id)
+        time_dimension.CumulVar(index).SetRange(
+            int(data["time_windows"][0][0]), int(data["time_windows"][0][1]))
+        routing.AddToAssignment(time_dimension.SlackVar(index))
+    
+    # Allow to drop nodes.
+    for node in range(numPhleb + 1, len(data['time_matrix'])): #Starting Location should be omitted
+        penalty = data['revenue_potential'][node]
+        routing.AddDisjunction([manager.NodeToIndex(node)], penalty)
+
+    for i in range(data["num_vehicles"]):
+        routing.AddVariableMinimizedByFinalizer(
+            time_dimension.CumulVar(routing.Start(i))
+        )
+        routing.AddVariableMinimizedByFinalizer(
+            time_dimension.CumulVar(routing.End(i))
+        )
+
+    #Add Service-Expertise Constraints
+    for location_idx, expConstraints in enumerate(data['expertises']):
+        if location_idx < numPhleb + 1:
+            continue
+
+        index = manager.NodeToIndex(location_idx)
+        vehicles = [-1]
+        vehicles.extend(expConstraints)
+        routing.VehicleVar(index).SetValues(vehicles)
+    
+
+    # Setting first solution heuristic.
+    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+    search_parameters.local_search_metaheuristic = (
+        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
+    search_parameters.time_limit.seconds = 30
+    search_parameters.log_search = True
+
+    # Solve the problem.
+    solution = routing.SolveWithParameters(search_parameters)
+
+    if solution:
+        return output_jsonify(data, manager, routing, solution)
+    else:
+         return 'Routing Status: ' + routing.status
     
 
 def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_expertise_list, algo_routes_json, api_key):
