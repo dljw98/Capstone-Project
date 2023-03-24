@@ -92,10 +92,11 @@ def convert_to_df(csv):
 
 def get_routes_api(orders, catchment, phleb, API_key):
     result = run_algorithm(orders, catchment, phleb, API_key)
-    json_object = json.loads(result)
-    routes = json_object['Routes']
-    routes = pd.json_normalize(routes)
-    return convert_to_csv(routes)
+    #json_object = json.loads(result)
+    #routes = json_object['Routes']
+    #routes = pd.json_normalize(routes)
+    #return convert_to_csv(routes)
+    return result
 
 st.title('TATA 1mg Matching Algorithm API')
 st.text("")
@@ -208,7 +209,7 @@ with tab4:
         st.download_button(
             label="Get Optimal Routes",
             data=get_routes_api(orders, get_catchment().iloc[:1], get_phleb(), API_key),
-            file_name="routes.csv",
-            mime="text/csv",
+            file_name="routes.json",
+            mime="text",
             key="routes_download",
         )
