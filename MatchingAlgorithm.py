@@ -25,13 +25,24 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
     
     num_vehicles: A single digit for the number of Phlebotomists available for allocation
 
-    servicing_times: An 1-d array for each order's servicing time required. Note that from Index 0 to M phlebotomists of the array
-            trivial, so can just set any arbritrary number (e.g. 0).
+    servicing_times: An 1-d array for each order's servicing time required. Note that from Index 0 to M phlebotomists of the array is
+            trivial, so it is set with an arbritrary number (e.g. 0).
 
     expertiseConstaints: An array consisting of N-Length arrays where N is the number of Vehicles/Phlebotomists 
             with the relevant expertise required for the location at the index of the array. 
             Format = [1 ... [0, 1 ... N] ...]
             Note that from Index 0 to M (where M is the number of Phlebotomists), the values are trivial, so can just set any arbritrary number (e.g. 1).
+
+    orders_capacities: A 1-d array for each orders to account for how much "carrying capacity" is needed from the phlebotomist to service the particular order. 
+            Note that from Index 0 to M phlebotomists of the array is trivial, so it is set with an arbritrary number (e.g. 0).
+    
+    phlebs_capacities: A 1-d array for each phlebotomist's maximum "carrying capacity" for 1 single trip. 
+            Note that from Index 0 to M phlebotomists of the array is trivial, so it is set with an arbritrary number (e.g. 0).
+    
+    inverse_ratings: A 1-d array for each phlebotomist's service ratings - inversed to represent as cost for the matching algorithm.
+
+    metadata: A dictionary containing important information of the Orders and Phlebotomists (e.g. Order ID, Phleb ID, etc).
+    
     """
     data = {}
 
