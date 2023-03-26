@@ -9,29 +9,29 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
     """
     Purpose of this function is to store the data for the problem.
 
-    time_matrix: A 2-d Array of Travel times between locations. Format is specified in Feature Engineering.py file
+    time_matrix: A 2-d Array of Travel times between locations. Format is specified in FeatureEngineering.py file.
 
     time_window: An array of time window tuples for each locations, requested times for the visit that MUST be fulfilled.
                 Format = [(X, X+60) ... (N, N+60)]
-                Note that at Index 0, it is the ending/pickup location, time window is set to the Break Time
+                Note that at Index 0, it is the ending/catchment location, time window is set to the Break Time
                 and for Index 1 to  M (where M is the number of Phlebotomists), those are phlebotomists' starting locations
-                therefore time windows are set based on their starting time
+                therefore time windows are set based on their starting time.
     
     revenues: A 1-d Array of revenues of each orders/order locations
             Format = [1 ... N]
-            Note that at Index 0, it is the ending/pickup location, revenue is set arbitrarily at $1 
+            Note that at Index 0, it is the ending/catchment location, revenue is set arbitrarily at $1 
             and for Index 1 to  M (where M is the number of Phlebotomists), those are phlebotomists' starting locations
-            revenue is also set arbitrarily at $1. However, those values are trivial and will not affect the algorithm
+            revenue is also set arbitrarily at $1. However, those values are trivial and will not affect the algorithm.
     
-    num_vehicles: A single digit for the number of Phlebotomists available for allocation
+    num_vehicles: A single integer for the number of Phlebotomists available for allocation.
 
-    servicing_times: An 1-d array for each order's servicing time required. Note that from Index 0 to M phlebotomists of the array is
+    servicing_times: A 1-d array for each order's required servicing time. Note that from Index 0 to M phlebotomists of the array is
             trivial, so it is set with an arbritrary number (e.g. 0).
 
     expertiseConstaints: An array consisting of N-Length arrays where N is the number of Vehicles/Phlebotomists 
             with the relevant expertise required for the location at the index of the array. 
             Format = [1 ... [0, 1 ... N] ...]
-            Note that from Index 0 to M (where M is the number of Phlebotomists), the values are trivial, so can just set any arbritrary number (e.g. 1).
+            Note that from Index 0 to M (where M is the number of Phlebotomists), the values are trivial, so it is set with an arbritrary number (e.g. 1).
 
     orders_capacities: A 1-d array for each orders to account for how much "carrying capacity" is needed from the phlebotomist to service the particular order. 
             Note that from Index 0 to M phlebotomists of the array is trivial, so it is set with an arbritrary number (e.g. 0).
@@ -50,7 +50,7 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
 
     data['inverse_ratings'] = [int(inv * 1) for inv in inverse_ratings]  
 
-    #Important! To ensure Revenue Lost is larger than overall transit time in order to ensure the "penalty" is effective during optimization routing
+    #Important! To ensure Revenue Lost is larger than the overall transit time in order to ensure the "penalty" is effective during routing optimization
     data['revenue_potential'] = [int(revenue * np.sum(time_matrix[1])) for revenue in revenues] 
     
     time_matrix_np = np.array(time_matrix)
