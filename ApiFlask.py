@@ -13,42 +13,43 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
+try:
+    from StringIO import StringIO ## for Python 2
+except ImportError:
+    from io import StringIO
 
 from FeatureEngineering import create_time_matrix
 from MatchingAlgorithm import run_algorithm
-
-orders = pd.read_csv("Simulated Data/order_data_1576.csv")
-phleb = pd.read_csv("Simulated Data/phleb_data_1576.csv")
-catchment = pd.read_csv("Simulated Data/catchment_data_1576.csv")
-
-orders = orders.iloc[:23]
-phleb = phleb.iloc[:3]
-catchment = catchment.iloc[:1]
-
-API_key = '' #INPUT YOUR OWN API KEY
-
-result = run_algorithm(orders, catchment, phleb, API_key)
-
-json_object = json.loads(result)
-routes = json_object['Routes']
-routes = pd.json_normalize(routes)
 
 ###
 app = Flask(__name__)
 api = Api(app)
 
-@app.route('/phlebos')
-def get_phlebos():
-    data = phleb.to_dict()
-    return {'data': data}, 200 
-
-@app.route('/orders')
-def get_orders():
-    data = orders.to_dict()
-    return {'data': data}, 200
-
 @app.route('/routes')
 def get_routes():
+    args = request.args
+    orders = args.get('orders')
+    ordersIO = StringIO(orders)
+    orders_df = pd.read_csv(ordersIO, index_col=None)
+    print(orders_df)
+    
+    catchment = args.get('catchment')
+    catchmentIO = StringIO(catchment)
+    catchment_df = pd.read_csv(catchmentIO, index_col=None)
+    catchment_df.drop(columns=['Unnamed: 0'], inplace=True)
+    print(catchment_df)
+
+    phleb = args.get('phleb')
+    phlebIO = StringIO(phleb)
+    phleb_df = pd.read_csv(phlebIO, index_col=None)
+    phleb_df.drop(columns=['Unnamed: 0'], inplace=True)
+    print(phleb_df)
+    
+    API_key = args.get('API_key')
+    isMultiEnds = args.get('isMultiEnds')
+    
+    result = run_algorithm(orders_df, catchment_df, phleb_df, API_key, isMultiEnds = False)
+    
     return {'route': result}, 200
 ###
 

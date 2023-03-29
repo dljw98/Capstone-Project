@@ -35,7 +35,6 @@ config = {
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
-orders = pd.read_csv("Simulated Data/order_data_1576.csv")
 phleb = pd.read_csv("Simulated Data/phleb_data_1576.csv")
 catchment = pd.read_csv("Simulated Data/catchment_data_1576.csv")
 
