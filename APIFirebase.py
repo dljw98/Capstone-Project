@@ -8,7 +8,6 @@ from flask import Flask, request, render_template
 from flask_restful import Resource, Api, reqparse
 from marshmallow import Schema, fields
 import re
-import xlsxwriter
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

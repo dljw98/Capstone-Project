@@ -51,7 +51,6 @@ def get_routes():
     result = run_algorithm(orders_df, catchment_df, phleb_df, API_key, isMultiEnds = False)
     
     return {'route': result}, 200
-###
 
 if __name__ == "__main__":
     app.run(port=8000)
