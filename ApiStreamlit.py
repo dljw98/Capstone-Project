@@ -90,9 +90,10 @@ def convert_to_df(csv):
     df = pd.read_csv(csv)
     return df
 
-def get_routes_api(orders, catchment, phleb, API_key):
-    result = run_algorithm(orders, catchment, phleb, API_key)
-    return result
+def get_routes_api(orders, catchment, phleb, API_key, isMultiEnds):
+    result = requests.get("http://127.0.0.1:8000/routes", 
+                          params={'orders':orders, 'catchment':catchment, 'phleb':phleb, 'API_key':API_key, 'isMultiEnds':isMultiEnds})
+    return result.json()['route']
 
 st.title('TATA 1mg Matching Algorithm API')
 st.text("")
@@ -217,27 +218,21 @@ with tab5:
     st.text("")
     st.text("")
 
-    st.download_button(
-        label="Get Phlebotomist Data",
-        data=convert_to_csv(get_phleb()),
-        file_name="phleb.csv",
-        mime="text/csv",
-        key="phleb_download",
-    )
-
-    st.download_button(
-        label="Get Catchment Data",
-        data=convert_to_csv(get_catchment()),
-        file_name="catchment.csv",
-        mime="text/csv",
-        key="catchment_download",
-    )
-
     if (len(API_key) != 0) and (orders is not None):
-        orders = convert_to_df(orders)
+        API_key = API_key
+        
+        orders_df = pd.read_csv(orders)
+        orders = orders_df.to_csv()
+        
+        catchment = get_catchment()
+        catchment = catchment.to_csv()
+        
+        phleb = get_phleb()
+        phleb = phleb.to_csv()
+        
         st.download_button(
             label="Get Optimal Routes",
-            data=get_routes_api(orders, get_catchment().iloc[:1], get_phleb(), API_key),
+            data=get_routes_api(orders, catchment, phleb, API_key, False),
             file_name="routes.json",
             mime="text",
             key="routes_download",
