@@ -103,11 +103,11 @@ Other Preprocessing Codes
 def get_coordinates_list(orders_df, catchments_df, phlebs_df):
     orders_df = orders_df.astype({'long': str, 'lat': str})
     catchments_df = catchments_df.astype({'long': str, 'lat': str})
-    phlebs_df = phlebs_df.astype({'home_long': str, 'home_lat': str})
+    phlebs_df = phlebs_df.astype({'long': str, 'lat': str})
     
     orders_df['Address'] = orders_df['lat'].str.cat(orders_df['long'], sep=',')
     catchments_df['Address'] = catchments_df['lat'].str.cat(catchments_df['long'], sep=',')
-    phlebs_df['Address'] = phlebs_df['home_lat'].str.cat(phlebs_df['home_long'], sep=',')
+    phlebs_df['Address'] = phlebs_df['lat'].str.cat(phlebs_df['long'], sep=',')
 
     addresses_list = []
     if catchments_df.shape[0] == 1:
