@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import cycle
 
+from scipy.spatial import distance_matrix
+
 import geopandas as gpd
 from shapely.geometry import Point, LineString
 import plotly_express as px
@@ -177,29 +179,69 @@ def create_grid_df(size, selected_dots):
     print(grid)
     return grid
 
-def create_addressess_list(selected_dots):
-    pass
+def create_df(grid, selected_dots, type):
+    if type == 'order':
+        location = 'Customer Orders'
+    elif type == 'phleb':
+        location = 'Phlebotomist Home'
+    elif type == 'catchment':
+        location = 'Catchment Area'
+        
+    n = len(selected_dots.get(location))
+    df = pd.read_csv(f'Simulated Data\{type}_data_1576.csv', header=0)[:n]
+    df.drop(['lat', 'long'], axis=1, inplace=True)
+    df['long'] = grid.loc[grid['Location'] == location, 'x'].reset_index(drop=True)
+    df['lat'] = grid.loc[grid['Location'] == location, 'y'].reset_index(drop=True)
+    if type == 'order':
+        df['buffer'] = 0
+        df['duration'] = 0
+
+    print(df)
+    return df
+    
+def create_address_list(selected_dots):
+    address_list = []
+    for location in ["Catchment Area", "Phlebotomist Home", "Customer Orders"]:
+        address_list.extend(selected_dots[location])
+
+    print(address_list)
+    return address_list
+
+def get_dist_btw_pts(x):
+    return distance_matrix(x, x, p=2)
+
+def box_time_matrix(address_list):
+    distance_matrix = get_dist_btw_pts(address_list)
+    return distance_matrix*60
 
 def visualise_boxdot():
     pass
 
-
 # for testing purposes
 if __name__ == "__main__":
-    # test visualise_routes()
-    with open("Route Visualisations/matching1.json", "r") as read_file:
-        json_result = json.load(read_file)
-    json_result = json.loads(json_result)
+    # # test visualise_routes()
+    # with open("Route Visualisations/matching1.json", "r") as read_file:
+    #     json_result = json.load(read_file)
+    # json_result = json.loads(json_result)
 
-    polygon = gpd.read_file("Simulation\Gurugram_sample_Polygon.geojson")
+    # polygon = gpd.read_file("Simulation\Gurugram_sample_Polygon.geojson")
     
-    visualise_routes(json_result, polygon)
+    # visualise_routes(json_result, polygon)
 
-    # # test visualise_boxdot
-    # scenario_1 = {
-    #     "Customer Orders":[(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(1,4),(3,3),(3,4),(4,3),(4,4),(5,3),(5,4)],
-    #     "Phlebotomist Home":[(1,1),(5,5)],
-    #     "Catchment Area":[(2,3)]
-    # }
+    # test visualise_boxdot
+    scenario_1 = {
+        "Customer Orders":[(0,0),(0,1),(0,2),(0,3),(0,4),(0,5),(1,4),(3,3),(3,4),(4,3),(4,4),(5,3),(5,4)],
+        "Phlebotomist Home":[(1,1),(5,5)],
+        "Catchment Area":[(2,3)]
+    }
 
-    # create_grid_df(5, scenario_1)
+    # grid = create_grid_df(5, scenario_1)
+    address_list = create_address_list(scenario_1)
+    time_matrix = box_time_matrix(address_list)
+    print(time_matrix)
+    # phleb_box_data = create_df(grid, scenario_1, 'phleb')
+    # orders_box_data = create_df(grid, scenario_1, 'order')
+    # catchment_box_data = create_df(grid, scenario_1, 'catchment')
+    
+
+
