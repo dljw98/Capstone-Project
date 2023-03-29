@@ -184,31 +184,28 @@ with tab4:
     lat = col1.text_input("Please input your latitude information", "")
     long = col2.text_input("Please input your longitude information", "")
     if (len(lat) != 0) and (len(long) != 0):
+        API_key = st.text_input("Please enter your API Key", "", key='api_key_timewindow')
         col1_, col2_, col3_ = st.columns([1,1,1])
-        vaccination = col1_.button('Vaccination', use_container_width=True)
-        art = col2_.button('ART Test', use_container_width=True)
-        pathology = col3_.button('Pathology', use_container_width=True)
-        #API_key = st.text_input("Please enter your API Key", "", key='api_key_timewindow')
-    if (len(lat) != 0) and (len(long) != 0) and ((vaccination) or (pathology) or (art)):
-        st.write('success')
+        premium = col1_.button('Premium', use_container_width=True)
+        regular = col2_.button('Regular', use_container_width=True)
+        special = col3_.button('Special', use_container_width=True)
+    if (len(lat) != 0) and (len(long) != 0) and (len(API_key) != 0) and ((premium) or (regular) or (special)):
         order_coord = lat + ',' + long
         service_time = None
         required_expertise = []
-        if vaccination:
-            service_time = 12
-            required_expertise.append('expertise_vaccination')
-        elif pathology:
-            service_time = 15
-            required_expertise.append('expertise_pathology')
+        if premium:
+            service_time = 11
+            required_expertise.append('expertise_premium')
+        elif regular:
+            service_time = 8
+            required_expertise.append('expertise_regular')
         else:
-            service_time = 20
-            required_expertise.append('expertise_artTest')
+            service_time = 12
+            required_expertise.append('expertise_special')
         routes = db.child('routes_placeholder').get().val()
-        string_result = reverse_getVacancy_algorithm(order_coord, service_time, required_expertise, routes,
-                                                    '')
+        string_result = reverse_getVacancy_algorithm(order_coord, service_time, required_expertise, routes, API_key)
         json_result = json.loads(string_result)
         df_result = pd.DataFrame.from_dict(json_result)
-        st.write(service_time)
         st.write(df_result)
         
 with tab5:

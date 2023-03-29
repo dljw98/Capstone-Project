@@ -31,19 +31,16 @@ def get_routes():
     orders = args.get('orders')
     ordersIO = StringIO(orders)
     orders_df = pd.read_csv(ordersIO, index_col=None)
-    print(orders_df)
     
     catchment = args.get('catchment')
     catchmentIO = StringIO(catchment)
     catchment_df = pd.read_csv(catchmentIO, index_col=None)
     catchment_df.drop(columns=['Unnamed: 0'], inplace=True)
-    print(catchment_df)
 
     phleb = args.get('phleb')
     phlebIO = StringIO(phleb)
     phleb_df = pd.read_csv(phlebIO, index_col=None)
     phleb_df.drop(columns=['Unnamed: 0'], inplace=True)
-    print(phleb_df)
     
     API_key = args.get('API_key')
     isMultiEnds = args.get('isMultiEnds')
