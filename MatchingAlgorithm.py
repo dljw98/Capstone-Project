@@ -645,3 +645,72 @@ def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_
     return vacant.to_json(orient="columns")
 
 
+def run_prescriptive_analysis(orders_df, catchments_df, phlebs_df, time_matrix, regular_ratio, special_ratio):
+
+    numOrders = len(orders_df)
+    numRegularOrder = regular_ratio * numOrders
+    numSpecialOrder = special_ratio * numOrders
+
+    serviceTypes = np.ones(numOrders)
+    serviceTypes[:int(numRegularOrder)] = 0 #Regular Order is 0
+    serviceTypes[int(numRegularOrder):int(numRegularOrder+numSpecialOrder)] = 2 #Special Order is 2; Premium Order is then 1
+
+    list_of_ratios = []
+    list_of_total_transit_time = []
+    list_of_total_cost = []
+    list_of_numbers = []
+    list_of_jsons = []
+
+    #Randomise it via shuffling
+    for _ in range(10):
+        np.random.shuffle(serviceTypes)
+
+        serviceRegular = [1 for _ in serviceTypes]
+        servicePremium = [1 if (int(type) == 1) | (int(type) == 2) else 0 for type in serviceTypes]
+        serviceSpecial = [1 if int(type) == 2 else 0 for type in serviceTypes]
+
+        #Generate new orders_df based on the randomised service types above
+        orders_df['service_regular'] = serviceRegular
+        orders_df['service_premium'] = servicePremium
+        orders_df['service_special'] = serviceSpecial
+
+        algo_routes_json = run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)
+
+        json_object = json.loads(algo_routes_json)
+        metadata = json_object['Metadata']
+        routes = json_object['Routes']
+        model = json_object['Model']
+
+        total_travel_time = model['Total Travel Time']
+        list_of_total_transit_time.append(total_travel_time)
+
+        chosen_phleb = []
+        numSpecialPhleb = 0
+        numPremiumPhleb = 0
+        numRegularPhleb = 0
+        
+        for phleb_idx in range(len(routes)):
+            phleb_route = routes[phleb_idx]
+            if len(phleb_route['Locations Sequence']) == 2:
+                continue
+            else:
+                chosen_phleb.append(phleb_idx)
+                expertises = metadata['Phlebotomists'][phleb_idx]['Expertise']
+                if 'expertise_special' in expertises:
+                    numSpecialPhleb += 1
+                elif 'expertise_premium'  in expertises:
+                    numPremiumPhleb += 1
+                else:
+                    numRegularPhleb += 1
+        
+        total = numSpecialPhleb + numPremiumPhleb + numRegularPhleb
+        list_of_ratios.append([numRegularPhleb/total, numPremiumPhleb/total, numSpecialPhleb/total])
+        list_of_numbers.append([numRegularPhleb, numPremiumPhleb, numSpecialPhleb])
+        total_cost =  numSpecialPhleb * 1000 + numPremiumPhleb * 900 + numRegularPhleb * 800
+        list_of_total_cost.append(total_cost)
+        list_of_jsons.append(algo_routes_json)
+    
+
+    return list_of_ratios, list_of_total_transit_time, list_of_total_cost, list_of_numbers, list_of_jsons
+
+    
