@@ -136,9 +136,13 @@ def get_servicingTimes_list(orders_df, catchments_df, phlebs_df):
     servicing_times.extend(orders_df['duration'] + orders_df['buffer'])
     return servicing_times
 
-def get_inverseRatings_list(orders_df, catchments_df, phlebs_df):
-    inverse_ratings = 6 - phlebs_df['service_rating']
-    return inverse_ratings
+def get_weightedRatingCost_list(phlebs_df, rating_weight = 1, cost_weight = 1):
+    # Depends on whether Service Quality is more prioritized or Cost is more prioritized, different weights can be assigned
+    inverse_ratings = phlebs_df['service_rating'].max() + 1 - phlebs_df['service_rating']
+    costs = phlebs_df['cost']
+    costRatingsWeights = rating_weight * inverse_ratings * cost_weight * costs
+    costRatingsWeights *= (10/costRatingsWeights.max())
+    return costRatingsWeights 
 
 def get_orderRevenues_list(orders_df, catchments_df, phlebs_df):
     numPhleb = phlebs_df.shape[0]

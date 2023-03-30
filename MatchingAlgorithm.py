@@ -1,11 +1,12 @@
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import FeatureEngineering as FE
+import DataSimulation as DS
 import numpy as np
 import json
 import pandas as pd
 
-def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  inverse_ratings, metadata):
+def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata):
     """
     Purpose of this function is to store the data for the problem.
 
@@ -39,7 +40,7 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
     phlebs_capacities: A 1-d array for each phlebotomist's maximum "carrying capacity" for 1 single trip. 
             Note that from Index 0 to M phlebotomists of the array is trivial, so it is set with an arbritrary number (e.g. 0).
     
-    inverse_ratings: A 1-d array for each phlebotomist's service ratings - inversed to represent as cost for the matching algorithm.
+    cost_rating_weight: A 1-d array for each phlebotomist's "cost" - weighted by Service Rating and Cost to represent as cost for the matching algorithm.
 
     metadata: A dictionary containing important information of the Orders and Phlebotomists (e.g. Order ID, Phleb ID, etc).
     
@@ -48,7 +49,7 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
 
     data['metadata'] = metadata
 
-    data['inverse_ratings'] = [int(inv * 1) for inv in inverse_ratings]  
+    data['cost_rating_weight'] = [int(inv * 1) for inv in cost_rating_weight]   #ensure the value is Int as the algorithm only accepts Int
 
     #Important! To ensure Revenue Lost is larger than the overall transit time in order to ensure the "penalty" is effective during routing optimization
     data['revenue_potential'] = [int(revenue * np.sum(time_matrix[1])) for revenue in revenues] 
@@ -338,13 +339,13 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
     revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
     servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
     expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
-    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
+    cost_rating_weight = FE.get_weightedRatingCost_list(phlebs_df)
     metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
     
     if isMultiEnds:
-        data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
+        data = create_data_model(orders_time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, cost_rating_weight, metadata)
     else:
-        data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
+        data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, cost_rating_weight, metadata)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
@@ -395,11 +396,9 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         time)
     time_dimension = routing.GetDimensionOrDie(time)
 
-    #Add preference to phlebotomists with better service quality
+    #Add preference to phlebotomists with better service quality and/or lower cost
     for vehicle_id in range(data["num_vehicles"]):
-        time_dimension.SetSpanCostCoefficientForVehicle(data['inverse_ratings'][vehicle_id], int(vehicle_id))
-        #routing.SetFixedCostOfVehicle(data['inverse_ratings'][vehicle_id], vehicle_id)
-        #print(routing.GetFixedCostOfVehicle(vehicle_id))
+        time_dimension.SetSpanCostCoefficientForVehicle(data['cost_rating_weight'][vehicle_id], int(vehicle_id))
 
     # Add time window constraints for each location except depot
     for location_idx, time_window in enumerate(data['time_windows']):
@@ -473,10 +472,10 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
     revenues  = FE.get_orderRevenues_list(orders_df, catchments_df, phlebs_df)
     servicing_times =  FE.get_servicingTimes_list(orders_df, catchments_df, phlebs_df)
     expertiseConstraints = FE.get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)
-    inverse_ratings = FE.get_inverseRatings_list(orders_df, catchments_df, phlebs_df)
+    cost_rating_weight = FE.get_weightedRatingCost_list(phlebs_df)
     metadata = FE.get_metadata(orders_df, catchments_df, phlebs_df)
     
-    data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, inverse_ratings, metadata)
+    data = create_data_model(time_matrix, order_window, revenues, numPhleb, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities, cost_rating_weight, metadata)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['time_matrix']),
@@ -527,9 +526,9 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
         time)
     time_dimension = routing.GetDimensionOrDie(time)
 
-    #Add preference to phlebotomists with better service quality
+    #Add preference to phlebotomists with better service quality and/or lower cost
     for vehicle_id in range(data["num_vehicles"]):
-        time_dimension.SetSpanCostCoefficientForVehicle(data['inverse_ratings'][vehicle_id], int(vehicle_id))
+        time_dimension.SetSpanCostCoefficientForVehicle(data['cost_rating_weight'][vehicle_id], int(vehicle_id))
 
     # Add time window constraints for each location except depot
     for location_idx, time_window in enumerate(data['time_windows']):
@@ -576,7 +575,7 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
-    search_parameters.time_limit.seconds = 30
+    search_parameters.time_limit.seconds = 10
     search_parameters.log_search = True
 
     # Solve the problem.
@@ -646,12 +645,3 @@ def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_
     return vacant.to_json(orient="columns")
 
 
-
-        
-
-    
-    
-
-
-    
-    
