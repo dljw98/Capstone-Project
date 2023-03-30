@@ -660,6 +660,7 @@ def run_prescriptive_analysis(orders_df, catchments_df, phlebs_df, time_matrix, 
     list_of_total_cost = []
     list_of_numbers = []
     list_of_jsons = []
+    list_of_chosen_phlebs = []
 
     #Randomise it via shuffling
     for _ in range(10):
@@ -709,8 +710,8 @@ def run_prescriptive_analysis(orders_df, catchments_df, phlebs_df, time_matrix, 
         total_cost =  numSpecialPhleb * 1000 + numPremiumPhleb * 900 + numRegularPhleb * 800
         list_of_total_cost.append(total_cost)
         list_of_jsons.append(algo_routes_json)
-    
+        list_of_chosen_phlebs.append(chosen_phleb)
 
-    return list_of_ratios, list_of_total_transit_time, list_of_total_cost, list_of_numbers, list_of_jsons
+    return list_of_ratios, list_of_total_transit_time, list_of_total_cost, list_of_numbers, list_of_jsons, list_of_chosen_phlebs
 
     
