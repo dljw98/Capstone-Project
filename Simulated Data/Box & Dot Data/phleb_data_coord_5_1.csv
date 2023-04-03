@@ -1,3 +1,2 @@
 shift_start,break_start,shift_end,cost,expertise_premium,expertise_regular,expertise_special,capacity,service_rating,home_long,home_lat,gender,phleb_id
-6,12,15,800,0,1,0,20,1,1,0,0,0
-6,12,15,800,0,1,0,20,5,1,0,0,1
+5,12,15,800,0,1,0,20,5,0,0,0,0
