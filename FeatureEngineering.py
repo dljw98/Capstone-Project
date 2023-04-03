@@ -6,15 +6,37 @@ import numpy as np
 def create_time_matrix(address_list, api):
     addresses = address_list
     API_key = api
-    # Distance Matrix API only accepts 100 elements per request, so get rows in multiple requests.
-    # Maximum number of rows that can be computed per request (9 * 9 = 81).
+
+    '''
+    Distance Matrix API only accepts 100 elements per request, so we need to get rows in multiple requests.
+    Maximum number of rows that can be computed per request is 9 (9 * 9 = 81).
+
+    Below shows the a toy exmample of a complete 2-D array (Time Matrix) that we are aiming for.
+    1 ... 9 r ... n*r
+    .
+    .
+    9 ... 9 r ... n*r
+    r ... 9 r ... n*r    
+    
+    '''
     max_rows = 9
     num_addresses = len(addresses)  
-    # num_addresses = q * max_rows + r 
+    # Formula: num_addresses = q * max_rows + r 
     q, r = divmod(num_addresses, max_rows)
     dest_addresses = addresses
     time_matrix = []
     for i in range(q):
+        '''
+        This is where we are computing the Top Left Square of the 2-D Time Matrix:
+        ----------
+        |1 ... 9 |r ... n*r
+        |.       |
+        |.       |
+        |9 ... 9 |r ... n*r
+        ----------
+        r ... 9 r ... n*r 
+
+        '''
         row_time_matrix = []
         origin_addresses = addresses[i * max_rows: (i + 1) * max_rows]
         for j in range(q):
@@ -26,6 +48,17 @@ def create_time_matrix(address_list, api):
                 for numRow  in range(len(row_time_matrix)):
                     row_time_matrix[numRow] += build_time_matrix(response)[numRow]
         if r > 0:
+            '''
+            This is where we are computing the Top Right Square of the 2-D Time Matrix:
+                    -----------
+            1 ... 9 |r ... n*r|
+            .       |         |
+            .       |         |
+            9 ... 9 |r ... n*r|
+                    -----------
+            r ... 9 r ... n*r 
+            
+            '''
             dest_addresses_r = addresses[(q * max_rows): (q * max_rows) + r]
             response = send_request(origin_addresses, dest_addresses_r, API_key)
             for numRow  in range(len(row_time_matrix)):
@@ -33,8 +66,18 @@ def create_time_matrix(address_list, api):
 
         time_matrix += row_time_matrix
 
-    # Get the remaining remaining r rows, if necessary.
     if r > 0:
+        '''
+            This is where we are computing the Bottom of the 2-D Time Matrix:
+            
+            1 ... 9 r ... n*r
+            .                
+            .                
+            9 ... 9 r ... n*r
+            -------------------
+           | r ... 9 r ... n*r |
+            -------------------
+        '''
         row_time_matrix = []
         origin_addresses = addresses[q * max_rows: q * max_rows + r]
         for j in range(q):
