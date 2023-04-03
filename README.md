@@ -37,7 +37,7 @@ Please note that all the functions under Pre-processing, except ```get_weightedR
 
 ```get_coordinates_list(orders_df, catchments_df, phlebs_df)``` genets coordinates of locations in the format of "lat,long", which is the required format for Distance Matrix API in the ```create_time_matrix``` function. The generated coordinates are strictly in the following sequence: Catchment location/s, followed by Phlebotomists starting locations, and lastly Order locations.
 
-```get_timeWindows_list(orders_df, catchments_df, phlebs_df)``` gets time windows of locations in the format of a tuple, consisting start window (in minutes, e.g 6am would be 6*60 = 360) and end window (which is just 60 min + start window). The generated time windows are in the same sequence as ```get_coordinates_list```: Catchment, followed by Phlebotomists starting locations, and lastly Order locations. For catchment area, the time window is mostly trivial and set to be the working hour - e.g. 6am to 6pm (6 * 60, 18 * 60). Generally, if the orders' latest time windows are by 2pm, phlebotomists will return to the catchment area immediately after servicing the last order at 2pm regardless of catchment's end window. However, please feel free to change the end window of the catchment area to "force" phlebotomists to reach catchment area before the designated end window time. Phlebotomists' time windows are just his/her shift starting time. Orders' time windows are when the phlebotomists _must arrive_ within to service the order - note that the phlebotomists can _service_ over the time window (especially when the servicing time is long).
+```get_timeWindows_list(orders_df, catchments_df, phlebs_df)``` gets time windows of locations in the format of a tuple, consisting of start window (in minutes, e.g 6am would be 6*60 = 360) and end window (which is just 60 min + start window). The generated time windows are in the same sequence as ```get_coordinates_list```: Catchment, followed by Phlebotomists starting locations, and lastly Order locations. For catchment area, the time window is mostly trivial and set to be the working hour - e.g. 6am to 6pm (6 * 60, 18 * 60). Generally, if the orders' latest time windows are by 2pm, phlebotomists will return to the catchment area immediately after servicing the last order at 2pm regardless of catchment's end window. However, please feel free to change the end window of the catchment area to "force" phlebotomists to reach catchment area before the designated end window time. Phlebotomists' time windows are just his/her shift starting time. Orders' time windows are when the phlebotomists _must arrive_ within to service the order - note that the phlebotomists can _service_ over the time window (especially when the servicing time is long).
 
 ```get_servicingTimes_list(orders_df, catchments_df, phlebs_df)``` gets an array of the _servicing time + buffer time_ of locations. The sequence is again start with Catchment area (which is trivial and set as 0), followed by phlebotomists (trivial, set as 0), and lastly the orders'. 
 
@@ -45,13 +45,14 @@ Please note that all the functions under Pre-processing, except ```get_weightedR
 
 ```get_orderCapacities_list(orders_df, catchments_df, phlebs_df)``` gets an array of the capacities required in each locations. The sequence is again start with Catchment area (which is trivial and set as 0), followed by phlebotomists (trivial, set as 0), and lastly the orders'. Capacities required refer, for example, to the blood samples the phlebotomist need to carry from the order, represented by integer value. During the Matching Algorithm, the sum of order capacities cannot exceed phlebotomists' capacities which is obtained from ```get_phlebCapacities_list```. 
 
-```get_phlebCapacities_list(orders_df, catchments_df, phlebs_df)```
+```get_phlebCapacities_list(orders_df, catchments_df, phlebs_df)``` gets an array of the maximum capacities a phlebotomist can carry in a single trip. 
 
-```get_weightedRatingCost_list(phlebs_df, rating_weight = 1, cost_weight = 1)``` 
+```get_weightedRatingCost_list(phlebs_df, rating_weight = 1, cost_weight = 1)``` gets an array of weighted costs (salary cost + inversed service rating) of a phlebotomist. Depends on whether Service Quality is more prioritized or Cost is more prioritized, different weights can be inputted to the function to influence the weighted numbers. This array is used for Tertiary Objective function (described in section "Matching Algorithm").
 
-```get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)```
+```get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df)``` gets an array of N-length array where N is the number of Phlebotomists 
+with the relevant expertise required for the order location at the index of the array. Basically, for each order (represented by the index), there is an array consisting of phlebotomist index which can service that order. 
 
-```get_metadata(orders_df, catchments_df, phlebs_df)```
+```get_metadata(orders_df, catchments_df, phlebs_df)``` gets a dictionary containing important information of the Orders and Phlebotomists (such as but not limited to, Order ID, Phleb ID, etc).
 
 # Matching Algorithm:
 - Overview (how it works)
