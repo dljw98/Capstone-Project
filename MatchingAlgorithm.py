@@ -645,7 +645,7 @@ def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_
     return vacant.to_json(orient="columns")
 
 
-def run_prescriptive_analysis(orders_df, catchments_df, phlebs_df, time_matrix, regular_ratio, special_ratio):
+def run_prescriptive_analysis(orders_df, catchments_df, phlebs_df, time_matrix, regular_ratio, premium_ratio, special_ratio):
 
     numOrders = len(orders_df)
     numRegularOrder = regular_ratio * numOrders
