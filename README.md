@@ -8,6 +8,17 @@
 - Dependencies
 - How to configure the project (external APIs)
 
+To configure the project, users are required to create an external Google Maps API. One can be created through your Google Cloud console, accessible through the following link:
+
+https://console.cloud.google.com/projectselector2/apis/credentials
+
+Once in the console, complete the following steps:
+1. Click the ```Create Project```. The button should be located at the end of a container in the center of your screen. You will be taken to a screen where you will be prompted to assign a <b>name</b> to your project.
+2. Assign a name to your project and click on the ```Create``` button.
+3. If done correctly, you will be taken back to the main console page. At the top of the console page, you will see the ```+ Create Credentials``` button. Click on it, then select ```API key``` in the pop-up list of options.
+4. A randomly generated API key will be created for your account. Save this API key and do not share it with others - you will be granted $300 credits as a free trial from Google. Upon usage of the credits, you will be required to <b>upgrade</b> your account, which <b>will incur billing.</b> Thus, it is important to keep this API private
+5. (Optional) As an added security measure, you can set restrictions on your API key. For instance, you can set an IP address restriction. Click the button with 3 dots lined vertically at the end of your API key in the console page. Then select ```Edit API key```. You will be taken to the API key edit page where you can select the kind of restrictions you wish to set on your API key. Select the IP address restriction and enter the IP address in the user input box. Only machines using the IP addreesses matching the ones entered will be allowed to utilise this API key. 
+
 # Requirements:
 - Functional
 - Non-functional
