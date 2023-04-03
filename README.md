@@ -6,6 +6,50 @@
 
 # Set Up:
 - Dependencies
+The required packages and dependencies are located in the requirements.txt file in the repository folder. Alternatively, below is the exhaustive list of packages in the requirements.txt file.
+
+firebase_admin==6.1.0
+
+Flask==2.2.2
+
+Flask_RESTful==0.3.9
+
+folium==0.14.0
+
+geopandas==0.12.2
+
+marshmallow==3.12.2
+
+matplotlib==3.7.0
+
+networkx==3.0
+
+numpy==1.23.5
+
+ortools==9.5.2237
+
+osmnx==1.3.0
+
+pandas==1.5.2
+
+plotly_express==0.4.1
+
+protobuf==3.20.1
+
+pyrebase==3.0.27
+
+Pyrebase4==4.6.0
+
+requests==2.28.2
+
+scipy==1.10.0
+
+shapely==2.0.1
+
+streamlit==1.20.0
+
+XlsxWriter==3.0.9
+
 - How to configure the project (external APIs)
 
 To configure the project, users are required to create an external Google Maps API. One can be created through your Google Cloud console, accessible through the following link:
@@ -13,7 +57,7 @@ To configure the project, users are required to create an external Google Maps A
 https://console.cloud.google.com/projectselector2/apis/credentials
 
 Once in the console, complete the following steps:
-1. Click the ```Create Project```. The button should be located at the end of a container in the center of your screen. You will be taken to a screen where you will be prompted to assign a <b>name</b> to your project.
+1. Click the ```Create Project``` button. The button should be located at the end of a container in the center of your screen. You will be taken to a screen where you will be prompted to assign a <b>name</b> to your project.
 2. Assign a name to your project and click on the ```Create``` button.
 3. If done correctly, you will be taken back to the main console page. At the top of the console page, you will see the ```+ Create Credentials``` button. Click on it, then select ```API key``` in the pop-up list of options.
 4. A randomly generated API key will be created for your account. Save this API key and do not share it with others - you will be granted $300 credits as a free trial from Google. Upon usage of the credits, you will be required to <b>upgrade</b> your account, which <b>will incur billing.</b> Thus, it is important to keep this API private
