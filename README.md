@@ -12,17 +12,17 @@
 - Functional
 - Non-functional
 
-# Data Simulation & Generation:
+# 1.0 Data Simulation & Generation:
 - Overview (how it works)
 - Features
 
-# Feature Engineering:
+# 2.0 Feature Engineering:
 The files for Feature Engineering are as follows:
 - <b>FeatureEngineering.py</b>
 
 Feature Engineering covers all the required data processing before running the Matching Algorithm. There are 2 main parts in the FeatureEngineering.py, namely Time Matrix and other Pre-processing codes. *Please note that Feature Engineering codes require the input dataframes (orders, catchments, and phlebotomists) to follow strictly the columnar formats as stipulated in the section "Data Simulation & Generation".
 
-## Time Matrix part:
+## 2.1 Time Matrix part:
 
 ```create_time_matrix(address_list, api)``` takes in a list of address_list, which can be generated using ```get_coordinates_list(orders_df, catchments_df, phlebs_df)``` from other Pre-processing codes, and a Google Map API key (refer to Requirements). This is the main function we will call. Output is a 2-D array consisting of the travel time between each locations in a square matrix format. This ```create_time_matrix``` is supported by the following functions:
 
@@ -32,7 +32,7 @@ Feature Engineering covers all the required data processing before running the M
 
 - ```build_time_matrix(response)``` takes in the dictionary response from ```send_request``` function and make it into the 2-D array output we see in the ```create_time_matrix``` function.
 
-## Pre-processing part:
+## 2.2 Pre-processing part:
 Please note that all the functions under Pre-processing, except ```get_weightedRatingCost_list```, takes in 3 arguments, namely Orders dataframe, Catchments dataframe, and Phlebotomists dataframe. This is to simplify the input requirements, but not all dataframes are used within each function itself.
 
 ```get_coordinates_list(orders_df, catchments_df, phlebs_df)``` genets coordinates of locations in the format of "lat,long", which is the required format for Distance Matrix API in the ```create_time_matrix``` function. The generated coordinates are strictly in the following sequence: Catchment location/s, followed by Phlebotomists starting locations, and lastly Order locations.
@@ -54,15 +54,23 @@ with the relevant expertise required for the order location at the index of the 
 
 ```get_metadata(orders_df, catchments_df, phlebs_df)``` gets a dictionary containing important information of the Orders and Phlebotomists (such as but not limited to, Order ID, Phleb ID, etc).
 
-# Matching Algorithm:
+# 3.0 Matching Algorithm:
 - Overview (how it works)
 - Features
 
-# Route Visualisation:
+# 4.0 Prescriptive Analysis:
 - Overview (how it works)
 - Features
 
-# API and Proof of Concept
+# 5.0 Scenario-based Testings on Algorithm:
+- Overview (how it works)
+- Features
+
+# 6.0 Route Visualisation:
+- Overview (how it works)
+- Features
+
+# 7.0 API and Proof of Concept
 ## Files and Back-End
 The files for our API and Proof of Concept (POC) Streamlit interface are as follows:
 - <b>ApiFlask.py</b>
@@ -84,13 +92,13 @@ ApiStreamlit contains the code for the Streamlit interface. It contains several 
 - ```isMultiEnds``` is a Boolean ```True``` or ```False``` indicating to the Matching Algorithm on whether to use Multi-Ending catchments or not to generate the optimal Phlebotomist routes
 
 
-## Before Running
+## 7.1 Before Running
 Ensure that you are using version 3.20.1 of protobuf, as newer/older versions may experience compatibility issues with the packages used in the API files. This can be done in the command line using:
 ```
 pip install protobuf=3.20.1
 ```
 
-## Running the API and Streamlit Interface
+## 7.2 Running the API and Streamlit Interface
 To run and interact with the Streamlit interface, first run the ApiFlask.py file. This can be done in the command line using:
 ```
 cd PATH_TO_FILE_DIRECTORY
@@ -104,7 +112,7 @@ python ApiStreamlit.py
 ```
 This will launch the tabular Streamlit interface
 
-## Streamlit Features
+## 7.3 Streamlit Features
 Tab 1 of the interface is titled "Amend Data with CSV", which allows you to change Phlebotomist data using a CSV file. The tab contains a widget that requires a <b> single file CSV </b> input. The file must contain the same columns as the data contained in Firebase. If the data in Firebase has the columns ```[A, B, C]```, then a file with ```[C, A, B]``` suffices, but ```[A, B, D]``` will not, and  ```[A, B]``` will not either. Once an acceptable file has been inputted, a "Confirm" button will appear. Clicking it will send the file to Firebase and update the data there. If the user inputted file contains rows with <b>new</b> Phlebotomists, Firebase will create new keys containing these information. If the user inputted file contains rows with <b>existing</b> Phlebotomists, Firebase will update those keys with the information provided in the file. Both can be done concurrently (using the same file).
 
 Tab 2 of the interface is titled "Amend Data Manually", which allows you to change the information of any one Phlebotomist. Enter the Phlebotomist ```ID``` into the user input box and click Enter. Text containers will appear containing all the pertinent information of the Phlebotomist with that particular ID. Change the desired fields and click the "Confirm" button to immediately update the Firebase Realtime Database to reflect the changes.
