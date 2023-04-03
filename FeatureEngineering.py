@@ -205,8 +205,8 @@ def get_phlebCapacities_list(orders_df, catchments_df, phlebs_df):
     return phlebs_df['capacity'] 
 
 def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
-    orders_df_copy = orders_df.copy()
-    phlebs_df_copy = phlebs_df.copy()
+    orders_df_copy = orders_df.copy().reset_index()
+    phlebs_df_copy = phlebs_df.copy().reset_index()
 
     def find_applicable_exp(row):
         args = np.empty(0)
