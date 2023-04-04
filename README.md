@@ -114,30 +114,29 @@ The files for Matching Algorithm are as follows:
 - <b>MatchingAlgorithm.py</b>
 - <b>Run Algorithm.ipynb</b>
 
-The Matching Algorithm has been built using OR-tools, an _Open Source_ software packages developed by Google, to solve optimization problems. In the most simplest form, our Matching Algorithm is solving a mixed variations of Vehicle Routing Problem (VRP), including but not limited to Capacitated Vehicle Routing Problem (CVRP), which is a difficult combinatorial problem containing both the Bin Packing Problem and the Traveling Salesman Problem (Ralphs et al., 2003). Highly customised to the needs of Tata 1mg business, our Matching Algorithm fulfils the followings criterias:
+The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> software packages developed by Google, to solve optimization problems. In the most simplest form, our Matching Algorithm is solving a mixed variations of Vehicle Routing Problem (VRP), including but not limited to Capacitated Vehicle Routing Problem (CVRP), which is a difficult combinatorial problem containing both the Bin Packing Problem and the Traveling Salesman Problem (Ralphs et al., 2003). Highly customised to the needs of Tata 1mg business, our Matching Algorithm fulfils the following criterias:
 
-- Multi-Objectives
+- <b>Multi-Objectives</b>
     - Primary Objective: Minimize the overall total Travel Time taken for phlebotomists to fulfil all orders.
     - Secondary Objective: If cannot fulfil all orders, Maximize the total possible Revenue Gain from the taken orders.
     - Tertiary Objective: Prioritize giving orders to phlebotomist with better Service Quality and/or lower Cost.
 
-- Multi-Dimensional Constraints
+- <b>Multi-Dimensional Constraints</b>
     - Maximum Carrying Capacity per phlebotomist in a single trip
     - Customer Time Windows
     - Service-Expertise Constraint
 
-- Multi-Level Customisabilities
-    - Phlebotomist Level
-        The Algorithm can cater to different Starting Points, different Starting Time, and different Carrying Capacity of _each_ Phlebotomists.
+- <b>Multi-Level Customisabilities</b>
+    - Phlebotomist Level <br>
+        The Algorithm can cater to different Starting Points, different Starting Time, and different Carrying Capacity of <b>each</b> Phlebotomists.
 
-    - Demand Level
+    - Demand Level <br>
         The Algorithm can cater to existing, as well as new upcoming, different Order Types (e.g. bulk orders, specialised services), as every service types can possibly be represented by decomposing into these columns when inputing into the Algorithm: Revenue, Capacity needed, Servicing Time and Expertise required. This applies as long as it is assumed that only 1 phlebotomist will be required to service the order. 
 
         E.g Bulk Order of 5, can be presented by 5x Revenue, 5x Capacity needed, and 5x Servicing time in a single row within the inputted dataframe for the Algorithm. 
 
-    - Optimization Level
+    - Optimization Level <br>
         In addition to the default Single-catchment (endpoint) optimization scenario by the business, the Algorithm also has an optimization option for Multi-catchment (multiple endpoints) use-case. This allows for the potential leverage of the vast lab locations Tata 1mg team has and could result in an even more optimal routing solution. 
-
 
 
 # 4.0 Prescriptive Analysis:
