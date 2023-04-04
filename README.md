@@ -72,7 +72,7 @@ Once in the console, complete the following steps:
 - Features
 
 # 2.0 Feature Engineering:
-The files for Feature Engineering are as follows:
+The file for Feature Engineering is as follows:
 - <b>FeatureEngineering.py</b>
 
 Feature Engineering covers all the required data processing before running the Matching Algorithm. There are 2 main parts in the FeatureEngineering.py, namely Time Matrix and other Pre-processing codes. *Please note that Feature Engineering codes require the input dataframes (orders, catchments, and phlebotomists) to follow strictly the columnar formats as stipulated in the section "Data Simulation & Generation".
@@ -110,8 +110,35 @@ with the relevant expertise required for the order location at the index of the 
 ```get_metadata(orders_df, catchments_df, phlebs_df)``` gets a dictionary containing important information of the Orders and Phlebotomists (such as but not limited to, Order ID, Phleb ID, etc).
 
 # 3.0 Matching Algorithm:
-- Overview (how it works)
-- Features
+The files for Matching Algorithm are as follows:
+- <b>MatchingAlgorithm.py</b>
+- <b>Run Algorithm.ipynb</b>
+
+The Matching Algorithm has been built using OR-tools, an _Open Source_ software packages developed by Google, to solve optimization problems. In the most simplest form, our Matching Algorithm is solving a mixed variations of Vehicle Routing Problem (VRP), including but not limited to Capacitated Vehicle Routing Problem (CVRP), which is a difficult combinatorial problem containing both the Bin Packing Problem and the Traveling Salesman Problem (Ralphs et al., 2003). Highly customised to the needs of Tata 1mg business, our Matching Algorithm fulfils the followings criterias:
+
+- Multi-Objectives
+    - Primary Objective: Minimize the overall total Travel Time taken for phlebotomists to fulfil all orders.
+    - Secondary Objective: If cannot fulfil all orders, Maximize the total possible Revenue Gain from the taken orders.
+    - Tertiary Objective: Prioritize giving orders to phlebotomist with better Service Quality and/or lower Cost.
+
+- Multi-Dimensional Constraints
+    - Maximum Carrying Capacity per phlebotomist in a single trip
+    - Customer Time Windows
+    - Service-Expertise Constraint
+
+- Multi-Level Customisabilities
+    - Phlebotomist Level
+        The Algorithm can cater to different Starting Points, different Starting Time, and different Carrying Capacity of _each_ Phlebotomists.
+
+    - Demand Level
+        The Algorithm can cater to existing, as well as new upcoming, different Order Types (e.g. bulk orders, specialised services), as every service types can possibly be represented by decomposing into these columns when inputing into the Algorithm: Revenue, Capacity needed, Servicing Time and Expertise required. This applies as long as it is assumed that only 1 phlebotomist will be required to service the order. 
+
+        E.g Bulk Order of 5, can be presented by 5x Revenue, 5x Capacity needed, and 5x Servicing time in a single row within the inputted dataframe for the Algorithm. 
+
+    - Optimization Level
+        In addition to the default Single-catchment (endpoint) optimization scenario by the business, the Algorithm also has an optimization option for Multi-catchment (multiple endpoints) use-case. This allows for the potential leverage of the vast lab locations Tata 1mg team has and could result in an even more optimal routing solution. 
+
+
 
 # 4.0 Prescriptive Analysis:
 - Overview (how it works)
@@ -177,3 +204,7 @@ Tab 3 of the interface is titled "Delete Data", which allows you to delete the i
 Tab 4 of the interface is titled "Get Available Timeslots", which allows you to obtain an available timeslot of a Phlebotomist that can serve a customer, given the customer's latitude and longitude information. After inputting the latitude and longitude of the customer/order, you will be prompted to enter your Google Maps API key, as well as to select the type of service that the customer/order requires. Once all the above information has been provided, a dataframe containing the chosen available timeslot wil be displayed. This will show the Phlebotomist assigned to this order, as well as information about when the available timeslot will occur. The function displayed in this tab assumes that the optimal routes have already been generated for the day. If no routes are available for the day yet, there is no need to check the available time slots as there will be none.
 
 Tab 5 of the interface is titled "Get Output", which allows you to obtain the optimal routes of the Phlebotomists in ```JSON``` format. To generate the routes, you are required to provide a CSV file containing the orders data, as well as a Google Maps API key. Once that has been provided, the Streamlit interface will call the API from the Flask application and run the Matching Algorithm. Depending on the size of the order CSV data file provided, the algorithm may take up to a couple of minutes to run. Once it has completed the algorithm, a button "Get Optimal Routes" will appear. Clicking it will download the routes generated as a JSON to your computer.
+
+# Citations
+
+- Ralphs, T. K., Kopman, L., Pulleyblank, W. R., &amp; Trotter, L. E. (2003). On the capacitated vehicle routing problem. Mathematical Programming, 94(2-3), 343–359. https://doi.org/10.1007/s10107-002-0323-0 
