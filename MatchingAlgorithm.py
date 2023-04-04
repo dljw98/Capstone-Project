@@ -49,7 +49,7 @@ def create_data_model(time_matrix, time_window, revenues, num_vehicles, servicin
 
     data['metadata'] = metadata
 
-    data['cost_rating_weight'] = [int(inv * 1) for inv in cost_rating_weight]   #ensure the value is Int as the algorithm only accepts Int
+    data['cost_rating_weight'] = [int(inv * 1) for inv in cost_rating_weight]   #ensure the value is integer as the algorithm only accepts integer
 
     #Important! To ensure Revenue Lost is larger than the overall transit time in order to ensure the "penalty" is effective during routing optimization
     data['revenue_potential'] = [int(revenue * np.sum(time_matrix[1])) for revenue in revenues] 
