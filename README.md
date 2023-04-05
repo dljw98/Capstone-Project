@@ -216,25 +216,29 @@ There are 3 main functions to call from the ```MatchingAlgorithm.py```, they are
     - ToLocIdx	- The Location Index the phlebotomist will service next after taking the new order
     - FromLocCoordinates - The Location Coordinates the phlebotomist need to service before taking the new order
     - ToLocCoordinates - The Location Coordinates the phlebotomist will service next after taking the new order
+
 <br>
-For the example code usage of the MatchingAlgorithm.py, you may refer to the ```Run Algorithm.ipynb```. 
+
+For an example code usage of the Matching Algorithm , you may refer to the ```Run Algorithm.ipynb```. 
+
 <br>
-For the details on the code implementation of the Matching Algorithm model, please refer to the comments written in MatchingAlgorithm.py, as well as the Source code of Google OR-tools - [link](https://github.com/google/or-tools/blob/main/ortools/constraint_solver/routing.h#L2861.).
+
+For the details on the code implementation of the Matching Algorithm model, please refer to the comments written in the ```MatchingAlgorithm.py```, as well as the Source code of Google OR-tools for routings - [link](https://github.com/google/or-tools/blob/main/ortools/constraint_solver/routing.h#L2861.).
 
 # 4.0 Prescriptive Analysis:
 The files for Matching Algorithm are as follows:
 - <b>MatchingAlgorithm.py</b>
 - <b>Run Algorithm.ipynb</b>
 
-The Prescriptive Analysis function has been built on top of the Matching Algorithm function combined with Monte Carlo Simulation - with an aim to answer the following question: given a ratio of demands for different types of services (e.g Regular, Premium, and Special), what is the optimal ratio of expertise amongst the Phlebotomists is needed.
+The Prescriptive Analysis function has been built on top of the Matching Algorithm function combined with Monte Carlo Simulation - with an aim to answer the following question: given a ratio of demands for different types of services (e.g Regular, Premium, and Special), what is the optimal ratio of expertise amongst the Phlebotomists.
 
 ```run_prescriptive_analysis(orders_df, catchments_df, phlebs_df, time_matrix, regular_ratio, premium_ratio, special_ratio)``` takes in 3 dataframes, a 2-D time matrix array, and the ratios of demand for Regular, Premium, and Special services respectively. 
 
-- Prior to running the function above, you need to generate a Base datasets of Orders, Phlebotomists, and Catchments. You may refer to ```DataSimulation.py``` on how to generate simulated data. Note that, for Phlebotomists data, we need to generate "**excess**" phlebotomists, meaning if there are 100 orders, we can generate 60 phlebotomists with equal ratio across all the expertises (e.g 20:20:20). Excess phlebotomists is important, so that the Matching Algorithm will select for us the ideal list and ratio of phlebotomists. For Catchment data, we only need 1 row - multi-catchments is not allowed and it won't affect the analysis either way. 
+- Prior to running the function above, you need to generate a Base datasets of Orders, Phlebotomists, and Catchments. You may refer to ```DataSimulation.py``` on how to generate the simulated data. Note that, for Phlebotomists data, we need to generate "**excess**" phlebotomists, meaning if there are 100 orders, we need to generate 60 phlebotomists with equal ratio across the expertises (e.g 20:20:20). Excess phlebotomists is important, so that the Matching Algorithm will select for us the ideal list and ratio of phlebotomists. For Catchment data, we only need 1 row - multi-catchments is not allowed and it won't affect the analysis meaningfully too. 
 
 - When running the function, internally, it will "shuffle" the Orders for 10 times without violating the Ratios inputted. Therefore, the function will return an array of 10 values instead of 1, which can be _averaged out_ to get a final number. The "shuffling" process is important to eliminate the edge scenarios and take on a more holistic view of the Prescriptive Analysis.
 
-- We can run the function multiple times with a list of different Demand Ratios, and then visualise how the Expertise ratios change in accord to that. 
+- We can run the function multiple times with a list of different Demand Ratios, and then visualise changes in Expertise ratios in accord to that. 
 
 - Complete implementation can be viewed in the ```Run Algorithm.ipynb```.
 
