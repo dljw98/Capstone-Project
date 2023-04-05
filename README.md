@@ -1,16 +1,17 @@
 # NUS // TATA 1mg - 2 Side Demand Supply Matching
 
 # Project Overview:
-## Purpose
-Given that TATA 1mg is facing a strong growth in demand, the company aims to expand current services by providing additional on-site healthcare services. TATA 1mg is therefore looking for an algorithmic solution to optimise target metrics, namely achieving maximum customer delight and the highest growth at an optimal cost. A scenario-based analysis is needed as well, with the consideration of multi-dimensional factors (demand, supply, temporal factors).
+## Purpose:
+Given that TATA 1mg is facing a strong growth in demand, the company aims to expand current services by providing additional on-site healthcare services. TATA 1 mg is therefore looking for an algorithmic solution to optimise target metrics, namely achieving maximum customer delight and the highest growth at an optimal cost. A scenario-based analysis is needed as well, with the consideration of multi-dimensional factors (demand, supply, temporal factors).
 
-## Introduction to Project
+## Introduction to Project:
 With the aim to meet Tata's requirements adequately, the following are the different components of our project:
 1. Demand-Supply Matching Algorithm
-    i. To generate optimal orders allocation to phlebotomists and routes to be taken that will maximise profits and reduce transit time.
+    i. To generate optimal orders allocation to phlebotomists and routes to be taken that will maximise profits and reduce transit
+    time.
 2. Scenario-Based Analysis
-    i. To identify the optimal business settings using data-driven methodologies
-    ii. Done with simulated data that was generated to imitate currently unobserved variables, and to test the Matching Algorithm​.
+    i. To identify the optimal business settings using data-driven methodologies.
+    ii. Done with simulated data that was generated to imitate currently unobserved variables, and to test the Matching Algorithm.
 3. API for Product Integration
     i. To deploy the Matching Algorithm for Tata's future product integration.
 
