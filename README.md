@@ -154,8 +154,21 @@ The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> soft
 - Features
 
 # 5.0 Scenario-based Testings on Algorithm:
-- Overview (how it works)
-- Features
+The files for Scenario-based Testings are as follows:
+- <b>Box&Dot output.ipynb</b>
+
+Scenario-based testings provides 5 different test cases that fucntions as a testing tool to validate our matching algorithm and demonstrate the flexibility and robustness of the matching algorithm, It helps to check if the output corresponds to what we deem is the optimal route given the different scenarios.  
+
+This notebook works with a simple coordinate layout which calls on ```MatchingAlgorithm.run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)```. The dataframe required for this function is the same as ```run_algorithm``` namely, the 3 csv files for the Orders, Phlebotomist and Catchment area. As this testing uses a simple coordinate layout, the longitude and latitude in the files should be edited to the y and x-axis of the points used in the box and dot diagram respectively. Sample input files has been stored under Simulated Data/Box & Dot Data for your reference.
+
+To obtain the time matrix for the box and dot scenarios, ```get_dist_btw_pts(x)``` and ```get_boxplot_timeMatrix(points)``` takes a list of coordinates required for the scenario according to Catchment area, Phlebotomist starting coordinate and Customer Orders coordinates in the order of the time windows indicated. Do note that each unit of coordinate corresponds to 60min travelling time for consistency and simplicity. You may check the ```output``` in the JSON file generated.
+
+The 5 Test Cases shows the following functionalities:
+1. Basic Performance
+2. Time Window Constraints
+3. Multi-dimensional Constraints and Multi-Objectives
+4. Customisability: Capacity-Constraints
+5. Customisability: Phlebotomist Ratings
 
 # 6.0 Route Visualisation:
 - Overview (how it works)
