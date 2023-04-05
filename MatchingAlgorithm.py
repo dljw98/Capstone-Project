@@ -463,6 +463,10 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
 def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix):
     
     numPhleb = phlebs_df.shape[0]
+    numCatchments = catchments_df.shape[0]
+
+    if (numCatchments > 1):
+        return "More than 1 catchment detected, not applicable for this function, please use run_algorithm() instead"
 
     time_matrix = time_matrix
     
@@ -575,7 +579,7 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
-    search_parameters.time_limit.seconds = 10
+    search_parameters.time_limit.seconds = 30
     search_parameters.log_search = True
 
     # Solve the problem.
@@ -604,9 +608,12 @@ def reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_
 
             max_slack_time = phleb_route['Slack Times Sequence'][idx][1]
 
-            if (max_slack_time == 0) | (required_servicing_time >= max_slack_time) : 
-                #Max Slack Time is 0, or required servicing time is more than or equal to Slack Time, nothing to do
-                continue
+
+            if (idx + 1) != len(phleb_route['Locations Sequence']):
+                #Slack time at the last edge (from last order location to ending catchment area) is always zero
+                if (max_slack_time == 0) | (required_servicing_time >= max_slack_time): 
+                    #Max Slack Time is 0, or required servicing time is more than or equal to Slack Time, nothing to do
+                    continue
 
             location_cur = phleb_route['Locations Sequence'][idx]
             location_next = phleb_route['Locations Sequence'][idx + 1]
