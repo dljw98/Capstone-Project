@@ -70,10 +70,6 @@ Once in the console, complete the following steps:
 5. Once you have created your API key, click on the blue ```Activate``` button at the top of the screen to activate your account and begin using your API key.
 6. (Optional) As an added security measure, you can set restrictions on your API key. For instance, you can set an IP address restriction. Click the button with 3 dots lined vertically at the end of your API key in the console page. Then select ```Edit API key```. You will be taken to the API key edit page where you can select the kind of restrictions you wish to set on your API key. Select the IP address restriction and enter the IP address in the user input box. Only machines using the IP addreesses matching the ones entered will be allowed to utilise this API key. 
 
-# Requirements:
-- Functional
-- Non-functional
-
 # 1.0 Data Simulation & Generation:
 The file for Data Simulation is as follows:
 - <b>DataSimulation.py</b>
@@ -193,6 +189,7 @@ The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> soft
     - Optimization Level <br>
         In addition to the default Single-catchment (endpoint) optimization scenario, the Algorithm also provides an optimization option for Multi-catchment (multiple endpoints) use-case. This allows for the potential leverage of the vast lab locations Tata 1mg team has and could result in an even more optimal routing solution. 
 <br>
+
 ![ImageMatchingAlgo](./Images/MatchingAlgorithmInOneSnapshot.png "Matching Algorithm - In One Snapshot")
 
 ## 3.1 How to use the Matching Algorithm
@@ -201,11 +198,27 @@ There are 3 main functions to call from the ```MatchingAlgorithm.py```, they are
 
 - ```run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = False)``` takes in 3 dataframes, a Google Maps API key, and an optinal binary variable to indicate whether "Multi-catchment" optimization option is selected. Please note that, even if the binary variable is not indicated, if the function detects that the inputted "catchments_df" has more than 1 row, the function will automatically switch to "Multi-catchment" optimization mode. The function will return the Optimal Routes in JSON format.
 
-- ```run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)``` takes in 3 dataframes and a 2-D time matrix array which can be generated using ```create_time_matrix``` function from ```FeatureEngineering.py```. There is no need to input Google Maps API key into the function, as the function will not be generating the time matrix within itself, and instead use the time matrix given in the input. This function is useful when you want to reduce the calls to Google Distance Matrix API (to reduce costs associated with it). This is also useful for our Scenario-based Testings (section 5), where it requires a custom time matrix that is simplified using for example, Euclidean distance, instead of actual travel time. **Important**: this function does not support "Multi-catchment" optimization option, as by design the "Multi-catchment" optimization must use the Google Maps API key. The function, same as ```run_algorithm``` function, returns the Optimal Routes in JSON format.<br>These 2 main functions for Matching Algorithm are supported by the following helper functions:
+- ```run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)``` takes in 3 dataframes and a 2-D time matrix array which can be generated using ```create_time_matrix``` function from ```FeatureEngineering.py```. There is no need to input Google Maps API key into the function, as the function will not be generating the time matrix within itself, and instead use the time matrix given in the input. This function is useful when you want to reduce the calls to Google Distance Matrix API (to reduce costs associated with it). This is also useful for our Scenario-based Testings (section 5), where it requires a custom time matrix that is simplified using for example, Euclidean distance, instead of actual travel time. **Important**: this function does not support "Multi-catchment" optimization option, as by design the "Multi-catchment" optimization must use the Google Maps API key. The function, same as ```run_algorithm``` function, returns the Optimal Routes in JSON format.<br> <br>These 2 main functions for Matching Algorithm are supported by the following helper functions:
     
-    - ```create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata)``` gets all necessary features generated using functions in ```FeatureEngineering.py``` to return a dictionary of data for the model to reference during optimization process. *Important: the Or-tools model only accept integer value (float is not allowed). 
+    - ```create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata)``` takes in all the necessary features generated using functions in ```FeatureEngineering.py``` to return a dictionary of data for the model to reference during the optimization process. **Important**: the Or-tools model only accept integer value (float is not allowed). 
 
-    - ```output_jsonify(data, manager, routing, solution)``` gets a dictionary of data generated by ```create_data_model```, and custom objects of Manager, Routing, and Solution from Or-tools package that will be initialised during the ```run_algorithm``` function. It returns a nested JSON.  
+    - ```output_jsonify(data, manager, routing, solution)``` takes in the dictionary of data generated by ```create_data_model``` above, and 3 custom objects of Manager, Routing, and Solution respectively that are initialised during the ```run_algorithm``` functions when running the optimization model - and simply return the Optimal Routes result in nested JSON. This is used when "Multi-catchment" optimization is not enabled.
+
+    - ```output_jsonify_verMultiEnds(data, manager, routing, solution, catchments_coordinates, api_key)``` takes in the same inputs as the ```output_jsonify``` function, but additionally, it also requires a 1-D array of catchment_coordinates and the Google Maps API key. This is only used when "Multi-catchment" optimization is enabled. Internally, it checks all the possible endpoints from the array of catchment_coordinates and map each routes to the closest endpoint before returning the final Optimal Routes result in nested JSON format. 
+
+- ```reverse_getVacancy_algorithm(order_coord, required_servicing_time, required_expertise_list, algo_routes_json, api_key)``` takes the coordinate-string of a new order ("lat,long" without spacing), an integer value (representing minutes needed for the servicing time), a list of the required expertises, and the previously generated Optimal Routes result JSON, and the Google Maps API key. It returns a non-nested JSON for a list of _possible combinations of vacant phlebotomists and time windows_ to take on the new order, specifically, below are the columns of information returned by the JSON:
+
+    - PhlebotomistIndex - **Index** of the phlebotomists that are available. You may want to map it back "phleb_id" using ```metadata``` section of the ```algo_routes_json`` input, depending on your use-case.
+    - TotalTravelTime - The	result is **ordered** by "TotalTravelTime" ascendingly. The Phlebotomist-Time-Window combination that has the lowest "TotalTravelTime" will be placed first, as lower the "TotalTravelTime", the more optimal it is towards the global optimality of the Matching Algorithm.
+    - TimeWindowStart - The start of the time window for the new order
+    - TimeWindowEnd	- The end of the time window the new order
+    - FromLocIdx - The Location Index the phlebotomist need to service before taking the new order
+    - ToLocIdx	- The Location Index the phlebotomist will service next after taking the new order
+    - FromLocCoordinates - The Location Coordinates the phlebotomist need to service before taking the new order
+    - ToLocCoordinates - The Location Coordinates the phlebotomist will service next after taking the new order
+<br>
+For the example code usage of the MatchingAlgorithm.py, you may refer to the ```Run Algorithm.ipynb```. 
+For the details on the code implementation of the Matching Algorithm model, please refer to the comments written in MatchingAlgorithm.py.
 
 # 4.0 Prescriptive Analysis:
 - Overview (how it works)
