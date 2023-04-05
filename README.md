@@ -6,13 +6,13 @@ Given that TATA 1mg is facing a strong growth in demand, the company aims to exp
 
 ## Introduction to Project:
 With the aim to meet Tata's requirements adequately, the following are the different components of our project:
-**1. Demand-Supply Matching Algorithm:**
+- Demand-Supply Matching Algorithm:
     To generate optimal orders allocation to phlebotomists and routes to be taken that will maximise profits and reduce transit
     time.
-**2. Scenario-Based Analysis:**
+- 2. Scenario-Based Analysis:
     To identify the optimal business settings using data-driven methodologies.
     Done with simulated data that was generated to imitate currently unobserved variables, and to test the Matching Algorithm.
-**3. API for Product Integration:**
+- 3. API for Product Integration:
     To deploy the Matching Algorithm for Tata's future product integration.
 
 # Set Up:
