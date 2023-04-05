@@ -97,7 +97,7 @@ Feature Engineering covers all the required data processing before running the M
 ## 2.2 Pre-processing part:
 Please note that all the functions under Pre-processing, except ```get_weightedRatingCost_list```, takes in 3 arguments, namely Orders dataframe, Catchments dataframe, and Phlebotomists dataframe. This is to simplify the input requirements, but not all dataframes are used within each function itself.
 
-```get_coordinates_list(orders_df, catchments_df, phlebs_df)``` genets coordinates of locations in the format of "lat,long", which is the required format for Distance Matrix API in the ```create_time_matrix``` function. The generated coordinates are strictly in the following sequence: Catchment location/s, followed by Phlebotomists starting locations, and lastly Order locations.
+```get_coordinates_list(orders_df, catchments_df, phlebs_df)``` gets the coordinates of locations in the format of "lat,long", which is the required format for Distance Matrix API in the ```create_time_matrix``` function. The generated coordinates are strictly in the following sequence: Catchment location/s, followed by Phlebotomists starting locations, and lastly Order locations.
 
 ```get_timeWindows_list(orders_df, catchments_df, phlebs_df)``` gets time windows of locations in the format of a tuple, consisting of start window (in minutes, e.g 6am would be 6*60 = 360) and end window (which is just 60 min + start window). The generated time windows are in the same sequence as ```get_coordinates_list```: Catchment, followed by Phlebotomists starting locations, and lastly Order locations. For catchment area, the time window is mostly trivial and set to be the working hour - e.g. 6am to 6pm (6 * 60, 18 * 60). Generally, if the orders' latest time windows are by 2pm, phlebotomists will return to the catchment area immediately after servicing the last order at 2pm regardless of catchment's end window. However, please feel free to change the end window of the catchment area to "force" phlebotomists to reach catchment area before the designated end window time. Phlebotomists' time windows are just his/her shift starting time. Orders' time windows are when the phlebotomists _must arrive_ within to service the order - note that the phlebotomists can _service_ over the time window (especially when the servicing time is long).
 
@@ -128,6 +128,8 @@ The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> soft
     - Secondary Objective: If cannot fulfil all orders, Maximize the total possible Revenue Gain from the taken orders.
     - Tertiary Objective: Prioritize giving orders to phlebotomist with better Service Quality and/or lower Cost.
 
+    - In addition to these 3 objective functions, we have also implemented a <b>Reverse objective function</b> that takes in a previously generated Optimal Routes from the Matching Algorithm and return a list of available phlebotomists and time windows given a new customer's order location. This allows for incremental matching without re-running the whole Matching Algorithm. Application-wise, it allows us to make this a Closed-loop solution and truly extending the Primary Objective of reducing travel times - which in turns allow Tata 1mg team to take on more orders and thus pushing the maximum revenue frontier. 
+
 - <b>Multi-Dimensional Constraints</b>
     - Maximum Carrying Capacity per phlebotomist in a single trip
     - Customer Time Windows
@@ -143,12 +145,22 @@ The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> soft
         E.g Bulk Order of 5, can be represented by 5x Revenue, 5x Capacity needed, and 5x Servicing time in a single row within the inputted dataframe for the Algorithm. 
 
     - Optimization Level <br>
-        In addition to the default Single-catchment (endpoint) optimization scenario by the business, the Algorithm also has an optimization option for Multi-catchment (multiple endpoints) use-case. This allows for the potential leverage of the vast lab locations Tata 1mg team has and could result in an even more optimal routing solution. 
+        In addition to the default Single-catchment (endpoint) optimization scenario, the Algorithm also provides an optimization option for Multi-catchment (multiple endpoints) use-case. This allows for the potential leverage of the vast lab locations Tata 1mg team has and could result in an even more optimal routing solution. 
 
-## 3.1 MatchingAlgorithm.py
-```create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata)``` gets all necessary features generated using functions in ```FeatureEngineering.py``` to return a dictionary of data for the model to reference during optimization process. *Important: the Or-tools model only accept integer value (float is not allowed). 
+![Image of the Matching Algorithm - In One Snapshot](./Images/Matching Algorithm - In One Snapshot.png "Matching Algorithm - In One Snapshot")
 
-```output_jsonify(data, manager, routing, solution)``` gets a dictionary of data generated by ```create_data_model```, and custom objects of Manager, Routing, and Solution from Or-tools package that will be initialised during the ```run_algorithm``` function. It returns a nested JSON.  
+## 3.1 How to use the Matching Algorithm
+
+There are 3 main functions to call from the ```MatchingAlgorithm.py```, they are namely:
+
+- ```run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = False)``` 
+- ```run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)```
+
+These 2 functions are very similar in terms of its intended usage. 
+
+   - ```create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata)``` gets all necessary features generated using functions in ```FeatureEngineering.py``` to return a dictionary of data for the model to reference during optimization process. *Important: the Or-tools model only accept integer value (float is not allowed). 
+
+    - ```output_jsonify(data, manager, routing, solution)``` gets a dictionary of data generated by ```create_data_model```, and custom objects of Manager, Routing, and Solution from Or-tools package that will be initialised during the ```run_algorithm``` function. It returns a nested JSON.  
 
 # 4.0 Prescriptive Analysis:
 - Overview (how it works)
