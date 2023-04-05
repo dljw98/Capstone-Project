@@ -147,7 +147,7 @@ The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> soft
     - Optimization Level <br>
         In addition to the default Single-catchment (endpoint) optimization scenario, the Algorithm also provides an optimization option for Multi-catchment (multiple endpoints) use-case. This allows for the potential leverage of the vast lab locations Tata 1mg team has and could result in an even more optimal routing solution. 
 
-![Image of the Matching Algorithm - In One Snapshot](./Images/Matching Algorithm - In One Snapshot.png "Matching Algorithm - In One Snapshot")
+![ImageMatchingAlgo](./Images/MatchingAlgorithmInOneSnapshot.png "Matching Algorithm - In One Snapshot")
 
 ## 3.1 How to use the Matching Algorithm
 
@@ -156,7 +156,7 @@ There are 3 main functions to call from the ```MatchingAlgorithm.py```, they are
 - ```run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = False)``` 
 - ```run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)```
 
-These 2 functions are very similar in terms of its intended usage. 
+These 2 functions are very similar in terms of its intended usage - to generate the Optimal Routes for each phlebotomists. 
 
    - ```create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata)``` gets all necessary features generated using functions in ```FeatureEngineering.py``` to return a dictionary of data for the model to reference during optimization process. *Important: the Or-tools model only accept integer value (float is not allowed). 
 
