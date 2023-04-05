@@ -25,6 +25,15 @@ from MatchingAlgorithm import run_algorithm
 app = Flask(__name__)
 api = Api(app)
 
+phleb = pd.read_csv("Simulated Data/phleb_data_1576.csv")
+catchment = pd.read_csv("Simulated Data/catchment_data_1576.csv")
+orders = pd.read_csv("Simulated Data/order_data_1576.csv")
+
+@app.route('/getroutes')
+def get_routes_temp():    
+    result = run_algorithm(orders, catchment, phleb, 'AIzaSyCnyJmHEJTBArfuBpHkb6vIQEESfE8F7Ec', isMultiEnds = False)
+    return {'route': result}, 200
+
 @app.route('/routes')
 def get_routes():
     args = request.args

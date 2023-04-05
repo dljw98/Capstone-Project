@@ -99,87 +99,12 @@ st.title('TATA 1mg Matching Algorithm API')
 st.text("")
 st.text("")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(['Amend Data with CSV', 'Amend Data Manually', 'Delete Data', 
-                                        'Get Available Timeslots', 'Get Output'])
+tab1, tab2, tab3 = st.tabs(['Get Available Timeslots', 'Get Output', 'Get Output (3 CSV)'])
 
 st.text("")
 st.text("")
 
 with tab1:
-    uploaded_phleb = st.file_uploader('Please upload Phlebotomist data: New Phlebotomists in your data will be added to the database, existing Phlebotomists in your data will have their database information updated', type='csv', accept_multiple_files=False)
-    if uploaded_phleb is not None:
-        uploaded_phleb = convert_to_df(uploaded_phleb)
-        if sorted(uploaded_phleb.columns.tolist()) == get_phleb().columns.tolist():
-            confirm = st.button('Confirm')
-            if confirm:
-                keys = get_phleb()['phleb_id'].tolist()
-                for index in range(len(uploaded_phleb)):
-                    phleb_id = uploaded_phleb['phleb_id'].iloc[index]
-                    json = uploaded_phleb.iloc[index].to_dict()
-                    if phleb_id not in keys:
-                        db.child('phlebotomists').child(phleb_id).set(json)
-                    else:
-                        db.child("phlebotomists").child(phleb_id).update(json)
-
-with tab2:
-    
-    changed_phleb = st.text_input('Please enter Phlebotomist with information to be changed', '')
-    if len(changed_phleb) != 0:
-        keys = get_phleb()['phleb_id'].tolist()
-        if float(changed_phleb) not in keys:
-            st.write('Phlebotomist is not currently registered in the database')
-        else:
-            st.text("")
-            st.text("")
-            data = db.child('phlebotomists').child(changed_phleb).get().val()
-            
-            col1, col2, col3, col4 = st.columns([1,1,1,1])
-            
-            phleb_id = col1.text_input('phleb_id', data['phleb_id'], key='phleb_id')
-            shift_start = col2.text_input('Shift Start', data['shift_start'], key='shift_start')
-            shift_end = col3.text_input('Shift End', data['shift_end'], key='shift_end')
-            break_start = col4.text_input('Break Start', data['break_start'], key='break_start')
-            
-            capacity = col1.text_input('Capacity', data['capacity'], key='capacity')
-            cost = col2.text_input('Cost', data['cost'], key='cost')
-            expertise_artTest = col3.text_input('Expertise ART Test', data['expertise_artTest'], key='expertise_artTest')
-            expertise_pathology = col4.text_input('Expertise Pathology', data['expertise_pathology'], key='expertise_pathology')
-            
-            expertise_vaccination = col1.text_input('Expertise Vaccination', data['expertise_vaccination'], key='expertise_vaccination')
-            home_lat = col2.text_input('Home Latitude', data['home_lat'], key='home_lat')
-            home_long = col3.text_input('Home Longitude', data['home_long'], key='home_long')
-            service_rating = col4.text_input('Service Rating', data['service_rating'], key='service_rating')
-            
-            st.text("")
-            st.text("")
-            
-            confirm = st.button('Confirm changes')
-            if confirm:
-                data['phleb_id'] = float(phleb_id)
-                data['shift_start'] = float(shift_start)
-                data['shift_end'] = float(shift_end)
-                data['break_start'] = float(break_start)
-                
-                data['capacity'] = float(capacity)
-                data['cost'] = float(cost)
-                data['expertise_artTest'] = float(expertise_artTest)
-                data['expertise_pathology'] = float(expertise_pathology)
-                
-                data['expertise_vaccination'] = float(expertise_vaccination)
-                data['home_lat'] = float(home_lat)
-                data['home_long'] = float(home_long)
-                data['service_rating'] = float(service_rating)
-                
-                db.child("phlebotomists").child(changed_phleb).update(data)
-                
-
-with tab3:
-    phleb_id = st.text_input('Please enter Phlebotomist ID to be deleted from Database', '')
-    if len(phleb_id) != 0:
-        phleb = get_phleb()
-        db.child('phlebotomists').child(phleb_id).remove()
-
-with tab4:
     col1, col2 = st.columns([1,1])
     lat = col1.text_input("Please input your latitude information", "")
     long = col2.text_input("Please input your longitude information", "")
@@ -194,13 +119,13 @@ with tab4:
         service_time = None
         required_expertise = []
         if premium:
-            service_time = 11
+            service_time = 12
             required_expertise.append('expertise_premium')
         elif regular:
-            service_time = 8
+            service_time = 10
             required_expertise.append('expertise_regular')
         else:
-            service_time = 12
+            service_time = 11
             required_expertise.append('expertise_special')
         routes = db.child('routes_placeholder').get().val()
         string_result = reverse_getVacancy_algorithm(order_coord, service_time, required_expertise, routes, API_key)
@@ -208,7 +133,7 @@ with tab4:
         df_result = pd.DataFrame.from_dict(json_result)
         st.write(df_result)
         
-with tab5:
+with tab2:
     orders = st.file_uploader('Please upload order data', type='csv', accept_multiple_files=False, key='upload_orders')
     API_key = st.text_input("Please enter your API Key", "", key='api_key_getoutput')
 
@@ -233,4 +158,19 @@ with tab5:
             file_name="routes.json",
             mime="text",
             key="routes_download",
+        )
+        
+with tab3:
+    col1_3, col2_3, col3_3 = st.columns([1,1,1])
+    phleb = col1_3.file_uploader('Please upload phlebotomist data', type='csv', accept_multiple_files=False, key='upload_phleb_3')
+    catchment = col2_3.file_uploader('Please upload catchment data', type='csv', accept_multiple_files=False, key='upload_catchment_3')
+    orders = col3_3.file_uploader('Please upload order data', type='csv', accept_multiple_files=False, key='upload_orders_3')
+    API_key = st.text_input("Please enter your API Key", "", key='api_key_getoutput_3')
+    if (len(API_key) != 0) and (phleb is not None) and (catchment is not None) and (orders is not None):
+        st.download_button(
+            label="Get Optimal Routes",
+            data=get_routes_api(orders, catchment, phleb, API_key, False),
+            file_name="routes.json",
+            mime="text",
+            key="routes_download_3",
         )
