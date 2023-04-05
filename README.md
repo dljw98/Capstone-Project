@@ -88,7 +88,7 @@ Feature Engineering covers all the required data processing before running the M
 
 ```create_time_matrix(address_list, api)``` takes in a list of address_list, which can be generated using ```get_coordinates_list(orders_df, catchments_df, phlebs_df)``` from other Pre-processing codes, and a Google Map API key (refer to Requirements). This is the main function we will call. Output is a 2-D array consisting of the travel time between each locations in a square matrix format. This ```create_time_matrix``` is supported by the following functions:
 
-- ```send_request(origin_addresses, dest_addresses, API_key)``` takes in a list of origin addresses, a list of destination addresses, and a Google Map API key, to actually send request to the Google Distance Matrix API and fetch the JSON result. Output is a dictionary of the fetched API result.
+- ```send_request(origin_addresses, dest_addresses, API_key)``` takes in a list of origin addresses, a list of destination addresses, and a Google Maps API key, to actually send request to the Google Distance Matrix API and fetch the JSON result. Output is a dictionary of the fetched API result.
 
 - ```secondsToMinutes(seconds)``` takes in a integer value of seconds, which is the default return unit of the Google Distance Matrix API, and converts it into minutes. Output is an integer value.
 
@@ -124,9 +124,9 @@ The files for Matching Algorithm are as follows:
 The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> software packages developed by Google, to solve optimization problems. In the most simplest form, our Matching Algorithm is solving a mixed variations of Vehicle Routing Problem (VRP), including but not limited to Capacitated Vehicle Routing Problem (CVRP), which is a difficult combinatorial problem containing both the Bin Packing Problem and the Traveling Salesman Problem (Ralphs et al., 2003). Highly customised to the needs of Tata 1mg business, our Matching Algorithm fulfils the following criterias:
 
 - <b>Multi-Objectives</b>
-    - Primary Objective: Minimize the overall total Travel Time taken for phlebotomists to fulfil all orders.
-    - Secondary Objective: If cannot fulfil all orders, Maximize the total possible Revenue Gain from the taken orders.
-    - Tertiary Objective: Prioritize giving orders to phlebotomist with better Service Quality and/or lower Cost.
+    - <b>Primary Objective</b>: Minimize the overall total Travel Time taken for phlebotomists to fulfil all orders.
+    - <b>Secondary Objective</b>: If cannot fulfil all orders, Maximize the total possible Revenue Gain from the taken orders.
+    - <b>Tertiary Objective</b>: Prioritize giving orders to phlebotomist with better Service Quality and/or lower Cost.
 
     - In addition to these 3 objective functions, we have also implemented a <b>Reverse objective function</b> that takes in a previously generated Optimal Routes from the Matching Algorithm and return a list of available phlebotomists and time windows given a new customer's order location. This allows for incremental matching without re-running the whole Matching Algorithm. Application-wise, it allows us to make this a Closed-loop solution and truly extending the Primary Objective of reducing travel times - which in turns allow Tata 1mg team to take on more orders and thus pushing the maximum revenue frontier. 
 
@@ -146,19 +146,18 @@ The Matching Algorithm has been built using OR-tools, an <b>Open Source</b> soft
 
     - Optimization Level <br>
         In addition to the default Single-catchment (endpoint) optimization scenario, the Algorithm also provides an optimization option for Multi-catchment (multiple endpoints) use-case. This allows for the potential leverage of the vast lab locations Tata 1mg team has and could result in an even more optimal routing solution. 
-
+<br>
 ![ImageMatchingAlgo](./Images/MatchingAlgorithmInOneSnapshot.png "Matching Algorithm - In One Snapshot")
 
 ## 3.1 How to use the Matching Algorithm
 
 There are 3 main functions to call from the ```MatchingAlgorithm.py```, they are namely:
 
-- ```run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = False)``` 
-- ```run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)```
+- ```run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = False)``` takes in 3 dataframes, a Google Maps API key, and an optinal binary variable to indicate whether "Multi-catchment" optimization option is selected. Please note that, even if the binary variable is not indicated, if the function detects that the inputted "catchments_df" has more than 1 row, the function will automatically switch to "Multi-catchment" optimization mode. The function will return the Optimal Routes in JSON format.
 
-These 2 functions are very similar in terms of its intended usage - to generate the Optimal Routes for each phlebotomists. 
-
-   - ```create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata)``` gets all necessary features generated using functions in ```FeatureEngineering.py``` to return a dictionary of data for the model to reference during optimization process. *Important: the Or-tools model only accept integer value (float is not allowed). 
+- ```run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_matrix)``` takes in 3 dataframes and a 2-D time matrix array which can be generated using ```create_time_matrix``` function from ```FeatureEngineering.py```. There is no need to input Google Maps API key into the function, as the function will not be generating the time matrix within itself, and instead use the time matrix given in the input. This function is useful when you want to reduce the calls to Google Distance Matrix API (to reduce costs associated with it). This is also useful for our Scenario-based Testings (section 5), where it requires a custom time matrix that is simplified using for example, Euclidean distance, instead of actual travel time. **Important**: this function does not support "Multi-catchment" optimization option, as by design the "Multi-catchment" optimization must use the Google Maps API key. The function, same as ```run_algorithm``` function, returns the Optimal Routes in JSON format.<br>These 2 main functions for Matching Algorithm are supported by the following helper functions:
+    
+    - ```create_data_model(time_matrix, time_window, revenues, num_vehicles, servicing_times, expertiseConstraints, orders_capacities, phlebs_capacities,  cost_rating_weight, metadata)``` gets all necessary features generated using functions in ```FeatureEngineering.py``` to return a dictionary of data for the model to reference during optimization process. *Important: the Or-tools model only accept integer value (float is not allowed). 
 
     - ```output_jsonify(data, manager, routing, solution)``` gets a dictionary of data generated by ```create_data_model```, and custom objects of Manager, Routing, and Solution from Or-tools package that will be initialised during the ```run_algorithm``` function. It returns a nested JSON.  
 
