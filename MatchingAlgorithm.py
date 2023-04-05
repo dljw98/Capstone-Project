@@ -386,12 +386,11 @@ def run_algorithm(orders_df, catchments_df, phlebs_df, api_key, isMultiEnds = Fa
         True,  # start cumul to zero
         'Capacity')
 
-    # Add Time Windows constraint.
     time = 'Time'
     routing.AddDimension(
         transit_callback_index,
         10000,  # arbitratrily large maximum Slack time 
-        10000,  # arbitratrily large maximum time per vehicle 
+        10000,  # arbitratrily large maximum ending time per vehicle 
         False,  # Don't force start cumul to zero.
         time)
     time_dimension = routing.GetDimensionOrDie(time)
@@ -520,12 +519,11 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
         True,  # start cumul to zero
         'Capacity')
 
-    # Add Time Windows constraint.
     time = 'Time'
     routing.AddDimension(
         transit_callback_index,
         10000,  # arbitratrily large maximum Slack time 
-        10000,  # arbitratrily large maximum time per vehicle 
+        10000,  # arbitratrily large maximum ending time per vehicle 
         False,  # Don't force start cumul to zero.
         time)
     time_dimension = routing.GetDimensionOrDie(time)
