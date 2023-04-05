@@ -31,7 +31,7 @@ orders = pd.read_csv("Simulated Data/order_data_1576.csv")
 
 @app.route('/getroutes')
 def get_routes_temp():    
-    result = run_algorithm(orders, catchment, phleb, 'AIzaSyCnyJmHEJTBArfuBpHkb6vIQEESfE8F7Ec', isMultiEnds = False)
+    result = run_algorithm(orders, catchment, phleb, '', isMultiEnds = False)
     return {'route': result}, 200
 
 @app.route('/routes')
