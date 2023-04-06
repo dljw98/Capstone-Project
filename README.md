@@ -75,7 +75,7 @@ The file for Data Simulation is as follows:
 - <b>DataSimulation.py</b>
 
 Data Simulation randomly simulates high fidelity data for phlebotomists, customer orders, and catchment areas.
-To simulate data, use the functions from DataSimulation.py as follows:
+To simulate data, import and use the functions from DataSimulation.py as follows:
 ```
 # read geojson polygon
 polygon = gpd.read_file("Simulation\Gurugram_sample_Polygon.geojson")
@@ -295,7 +295,13 @@ The 5 Test Cases shows the following functionalities:
 5. Customisability: Phlebotomist Ratings
 
 # 6.0 Route Visualisation:
-- Overview (how it works)
+The files for Route Visualisation are as follows:
+- <b>RouteVisualisation.py</b>
+
+Route Visulisation makes use of folium and osmx packages to plot an interactive and realistic map of the routes which phlebotomists take based on the Matching Algorithm's output. The markers can be clicked on to show more details about each location, and the file is saved as a Route.html file under the Route Visualisations folder.
+
+`visualise_routes(json_result, polygon)` takes in the json result returned from the Matching Algorithm, and the same geojson polygon that is used to generate coordinates during DataSimulation. The function iterates through the route taken by each phlebotomist, and assigns each stop along the route to the nearest node possible using the osmnx package. The path between each node is then drawn onto a folium map, and the respective markers and information such as arrival and departure time are added. `create_popup(text)` is used to create these clickable pop-ups for each marker. `to_time(time_window)`  converts the time window given in the json output to actual time to be displayed in the popups.
+
 - Features
 
 # 7.0 API and Proof of Concept
