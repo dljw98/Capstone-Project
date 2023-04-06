@@ -75,6 +75,20 @@ The file for Data Simulation is as follows:
 - <b>DataSimulation.py</b>
 
 Data Simulation randomly simulates high fidelity data for phlebotomists, customer orders, and catchment areas.
+To simulate data, use the functions from DataSimulation.py as follows:
+`
+# read geojson polygon
+polygon = gpd.read_file("Simulation\Gurugram_sample_Polygon.geojson")
+# define the number of phlebotomists, orders and catchment areas
+n_phleb, n_orders, n_catchment = 10, 1, 90
+# set seed for reproducibility
+seed = 1
+# generate coordinates using generate_coords
+coords = generate_coords(seed, n_phleb, n_order, n_catchment, polygon)
+# create the respective dataframes 
+catchment_df = create_catchment_df(seed, coords)
+phleb_df = create_phleb_df(seed, coords, n_phleb, [0.8, 0.1, 0.1])
+order_df = create_orders_df(seed, coords, n_order, [0.8, 0.1, 0.1])`
 
 ## 1.1 Getting skills:
 
