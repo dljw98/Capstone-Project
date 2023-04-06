@@ -2,7 +2,7 @@
 
 # Project Overview:
 ## Purpose:
-Given that TATA 1mg is facing a strong growth in demand, the company aims to expand current services by providing additional on-site healthcare services. TATA 1 mg is therefore looking for an algorithmic solution to optimise target metrics, namely achieving maximum customer delight and the highest growth at an optimal cost. A scenario-based analysis is needed as well, with the consideration of multi-dimensional factors (demand, supply, temporal factors).
+Given that TATA 1 mg is facing a strong growth in demand, the company aims to expand current services by providing additional on-site healthcare services. TATA 1 mg is therefore looking for an algorithmic solution to optimise target metrics, namely achieving maximum customer delight and the highest growth at an optimal cost. A scenario-based analysis is needed as well, with the consideration of multi-dimensional factors (demand, supply, temporal factors).
 
 ## Introduction to Project:
 With the aim to meet Tata's requirements adequately, the following are the different components of our project:
