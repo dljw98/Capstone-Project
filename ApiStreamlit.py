@@ -119,13 +119,13 @@ with tab1:
         service_time = None
         required_expertise = []
         if premium:
-            service_time = 12
+            service_time = 3
             required_expertise.append('expertise_premium')
         elif regular:
-            service_time = 10
+            service_time = 2
             required_expertise.append('expertise_regular')
         else:
-            service_time = 11
+            service_time = 4
             required_expertise.append('expertise_special')
         routes = db.child('routes_placeholder').get().val()
         string_result = reverse_getVacancy_algorithm(order_coord, service_time, required_expertise, routes, API_key)

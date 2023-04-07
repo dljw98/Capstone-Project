@@ -25,15 +25,6 @@ from MatchingAlgorithm import run_algorithm
 app = Flask(__name__)
 api = Api(app)
 
-phleb = pd.read_csv("Simulated Data/phleb_data_1576.csv")
-catchment = pd.read_csv("Simulated Data/catchment_data_1576.csv")
-orders = pd.read_csv("Simulated Data/order_data_1576.csv")
-
-@app.route('/getroutes')
-def get_routes_temp():    
-    result = run_algorithm(orders, catchment, phleb, '', isMultiEnds = False)
-    return {'route': result}, 200
-
 @app.route('/routes')
 def get_routes():
     args = request.args
@@ -44,12 +35,14 @@ def get_routes():
     catchment = args.get('catchment')
     catchmentIO = StringIO(catchment)
     catchment_df = pd.read_csv(catchmentIO, index_col=None)
-    catchment_df.drop(columns=['Unnamed: 0'], inplace=True)
+    if 'Unnamed: 0' in catchment_df.columns.tolist():
+        catchment_df.drop(columns=['Unnamed: 0'], inplace=True)
 
     phleb = args.get('phleb')
     phlebIO = StringIO(phleb)
     phleb_df = pd.read_csv(phlebIO, index_col=None)
-    phleb_df.drop(columns=['Unnamed: 0'], inplace=True)
+    if 'Unnamed: 0' in phleb_df.columns.tolist():
+        phleb_df.drop(columns=['Unnamed: 0'], inplace=True)
     
     API_key = args.get('API_key')
     isMultiEnds = args.get('isMultiEnds')
