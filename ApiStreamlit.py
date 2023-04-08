@@ -108,30 +108,32 @@ with tab1:
     col1, col2 = st.columns([1,1])
     lat = col1.text_input("Please input your latitude information", "")
     long = col2.text_input("Please input your longitude information", "")
-    if (len(lat) != 0) and (len(long) != 0):
+    routes = st.file_uploader('Please upload routes data', type='json', accept_multiple_files=False, key='upload_routes_1')
+    if (len(lat) != 0) and (len(long) != 0) and (routes is not None):
+        routes = json.load(routes)
+        routes = json.dumps(routes)
         API_key = st.text_input("Please enter your API Key", "", key='api_key_timewindow')
         col1_, col2_, col3_ = st.columns([1,1,1])
         premium = col1_.button('Premium', use_container_width=True)
         regular = col2_.button('Regular', use_container_width=True)
         special = col3_.button('Special', use_container_width=True)
-    if (len(lat) != 0) and (len(long) != 0) and (len(API_key) != 0) and ((premium) or (regular) or (special)):
-        order_coord = lat + ',' + long
-        service_time = None
-        required_expertise = []
-        if premium:
-            service_time = 3
-            required_expertise.append('expertise_premium')
-        elif regular:
-            service_time = 2
-            required_expertise.append('expertise_regular')
-        else:
-            service_time = 4
-            required_expertise.append('expertise_special')
-        routes = db.child('routes_placeholder').get().val()
-        string_result = reverse_getVacancy_algorithm(order_coord, service_time, required_expertise, routes, API_key)
-        json_result = json.loads(string_result)
-        df_result = pd.DataFrame.from_dict(json_result)
-        st.write(df_result)
+        if (len(lat) != 0) and (len(long) != 0) and (len(API_key) != 0) and ((premium) or (regular) or (special)):
+            order_coord = lat + ',' + long
+            service_time = None
+            required_expertise = []
+            if premium:
+                service_time = 3
+                required_expertise.append('expertise_premium')
+            elif regular:
+                service_time = 2
+                required_expertise.append('expertise_regular')
+            else:
+                service_time = 4
+                required_expertise.append('expertise_special')
+            string_result = reverse_getVacancy_algorithm(order_coord, service_time, required_expertise, routes, API_key)
+            json_result = json.loads(string_result)
+            df_result = pd.DataFrame.from_dict(json_result)
+            st.write(df_result)
         
 with tab2:
     orders = st.file_uploader('Please upload order data', type='csv', accept_multiple_files=False, key='upload_orders')
@@ -166,7 +168,18 @@ with tab3:
     catchment = col2_3.file_uploader('Please upload catchment data', type='csv', accept_multiple_files=False, key='upload_catchment_3')
     orders = col3_3.file_uploader('Please upload order data', type='csv', accept_multiple_files=False, key='upload_orders_3')
     API_key = st.text_input("Please enter your API Key", "", key='api_key_getoutput_3')
+    
     if (len(API_key) != 0) and (phleb is not None) and (catchment is not None) and (orders is not None):
+        
+        orders_df = pd.read_csv(orders)
+        orders = orders_df.to_csv()
+        
+        catchment_df = pd.read_csv(catchment)
+        catchment = catchment_df.to_csv()
+        
+        phleb_df = pd.read_csv(phleb)
+        phleb = phleb_df.to_csv()
+        
         st.download_button(
             label="Get Optimal Routes",
             data=get_routes_api(orders, catchment, phleb, API_key, False),
