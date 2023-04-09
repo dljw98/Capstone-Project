@@ -11,7 +11,7 @@ def create_time_matrix(address_list, api):
     Distance Matrix API only accepts 100 elements per request, so we need to get rows in multiple requests.
     Maximum number of rows that can be computed per request is 9 (9 * 9 = 81).
 
-    Below shows the a toy exmample of a complete 2-D array (Time Matrix) that we are aiming for.
+    Below shows the toy example of a complete 2-D array (Time Matrix) that we are aiming for.
     1 ... 9 r ... n*r
     .
     .
