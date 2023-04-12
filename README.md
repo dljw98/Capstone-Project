@@ -2,13 +2,13 @@
 
 # Project Overview:
 ## Purpose:
-Given that TATA 1mg is facing a strong growth in demand, the company aims to expand current services by providing additional on-site healthcare services. TATA 1mg is therefore looking for an algorithmic solution to optimise target metrics, namely achieving maximum customer delight and the highest growth at an optimal cost. A scenario-based analysis is needed as well, with the consideration of multi-dimensional factors (demand, supply, temporal factors).
+Given that TATA 1mg is facing a strong growth in demand, the company aims to expand current services by providing additional on-site healthcare services, on top of its existing pathology services. TATA 1mg is therefore looking for an algorithmic solution that can cater to the future expansion of services while accounting for multi-dimesional factors, including demand and supply factors. Additionally, a scenario-based analysis for the evaluation of the algorithm and its application to TATA's business context is required.
 
 ## Introduction to Project:
 With the aim to meet Tata's requirements adequately, the following are the different components of our project:
-- Demand-Supply Matching Algorithm: To generate optimal orders allocation to phlebotomists and routes to be taken that will maximise profits and reduce transit time.
-- Scenario-Based Analysis: To identify the optimal business settings using data-driven methodologies. Done with simulated data that was generated to imitate currently unobserved variables, and to test the Matching Algorithm.
-- API for Product Integration: To deploy the Matching Algorithm for Tata's future product integration.
+- Data Simulation and Generation: Data is simulated and generated to imitate both observed and currently unobserved variables, and to test the Matching Algorithm. 
+- Matching Algorithm: Including feature engineering of data used as input for the algorithm and prescriptive analytics to cater to specific requirements the company may have.
+- Scenario-based testing on algorithm, API development and Proof of Concept: Testing and evaluation of the algorithm in different scenarios. API development for product integration and a Streamlit interface as Proof of Concept.
 
 # Set Up:
 - Dependencies
