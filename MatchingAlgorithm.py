@@ -542,9 +542,11 @@ def run_algorithm_version_timeMatrix(orders_df, catchments_df, phlebs_df, time_m
 
     # Add time window constraints for each vehicle start node.
     for vehicle_id in range(data["num_vehicles"]):
-        index = routing.Start(vehicle_id)
-        time_dimension.CumulVar(index).SetRange(
+        index_start = routing.Start(vehicle_id)
+        time_dimension.CumulVar(index_start).SetRange(
             int(data["time_windows"][0][0]), int(data["time_windows"][0][1]))
+        index_end = routing.End(vehicle_id)
+        time_dimension.CumulVar(index_end).SetMax(int(data["time_windows"][0][1]))
         routing.AddToAssignment(time_dimension.SlackVar(index))
     
     # Allow to drop nodes.
