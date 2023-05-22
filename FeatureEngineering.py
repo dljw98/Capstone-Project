@@ -202,7 +202,7 @@ def get_orderCapacities_list(orders_df, catchments_df, phlebs_df):
     return capacities 
 
 def get_phlebCapacities_list(orders_df, catchments_df, phlebs_df):
-    return phlebs_df['capacity'] 
+    return phlebs_df['capacity'].tolist() 
 
 def get_serviceExpertiseConstraint_list(orders_df, catchments_df, phlebs_df):
     orders_df_copy = orders_df.copy().reset_index()
